@@ -6,7 +6,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.net.URL;
 
 public class MainApplication extends Application {
@@ -20,7 +19,6 @@ public class MainApplication extends Application {
             //load the main menu
             Parent root = FXMLLoader.load(location);
             Scene scene = new Scene(root);
-
             stage.setScene(scene);
             stage.setTitle("HistoFact");
             stage.show();
