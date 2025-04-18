@@ -1,13 +1,12 @@
 package hacp.histofact;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import javafx.scene.control.Label;
+
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -27,7 +26,6 @@ public class MainController {
     Label statusLabel;
     @FXML
     VBox detailsVBox;
-
 
 
     public void initialize() {
@@ -112,7 +110,7 @@ public class MainController {
         //System.out.println("Searching in " + selectedField);
         //System.out.println("Searching for " + query);
 
-        ArrayList<Artifact> results = artifactController.searchArtifacts(query, selectedField);
+        ArrayList<Artifact> results = (ArrayList<Artifact>) artifactController.searchArtifacts(query, selectedField);
 
         if (results.isEmpty()) {
             Label noResults = new Label("No artifacts found.");
@@ -173,4 +171,55 @@ public class MainController {
 
     }
 
+    @FXML
+    public void handleUserManual(ActionEvent event) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("User Manual");
+        alert.setHeaderText(null);
+        TextArea textArea = new TextArea();
+        textArea.setText(
+                "Welcome to the HistoFact!\n\n"
+                        + "- Use 'New' to add a new artifact\n"
+                        + "- Use 'Search' to filter by any field\n"
+                        + "- Use 'Tags' dropdown for advanced filtering\n"
+                        + "- Export and import JSON data\n\n"
+                        + "Make sure to save your work before exiting!"
+        );
+        textArea.setWrapText(true);
+        textArea.setEditable(false);
+
+        // Set preferred size
+        textArea.setPrefWidth(600);
+        textArea.setPrefHeight(400);
+
+        alert.getDialogPane().setContent(textArea);
+        alert.getDialogPane().setPrefSize(650, 450);
+        alert.showAndWait();
+
+    }
+
+    @FXML
+    public void handleAbout (ActionEvent event) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("About");
+        alert.setHeaderText(null);
+        TextArea textArea = new TextArea();
+        textArea.setText(
+                "HistoFact is the semester project of three IUE students, Ege Çakıcı, Zeynep Erman and Berra Okudurlar for the CE 216 class.\n\n"
+                        + "It is currently a prototype.\n\n"
+                        + "Our purpose with HistoFact is to make historical artifact management easier.\n\n"
+
+        );
+        textArea.setWrapText(true);
+        textArea.setEditable(false);
+
+        // Set preferred size
+        textArea.setPrefWidth(600);
+        textArea.setPrefHeight(400);
+
+        alert.getDialogPane().setContent(textArea);
+        alert.getDialogPane().setPrefSize(650, 450);
+        alert.showAndWait();
+
+    }
 }
