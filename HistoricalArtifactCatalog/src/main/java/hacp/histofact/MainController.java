@@ -4,9 +4,14 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
+import java.awt.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -79,9 +84,51 @@ public class MainController {
     }
 
     // Methods for handling user interactions
+    @FXML
     public void handleAddArtifact() {
 
+        detailsVBox.getChildren().clear();
+
+        VBox newArtifactForm = new VBox(10);
+        new Insets(15, 10, 15, 10);
+
+        TextField nameField = new TextField();
+        nameField.setPromptText("Artifact Name");
+
+        ComboBox<String> categoryComboBox = new ComboBox<>();
+        categoryComboBox.getItems().addAll("Sculpture", "Manuscript", "Tool", "Weapon", "Pottery");
+        categoryComboBox.setPromptText("Select Category");
+
+        DatePicker discoveryDatePicker = new DatePicker();
+        discoveryDatePicker.setPromptText("Discovery Date");
+
+        TextField civilizationField = new TextField();
+        civilizationField.setPromptText("Civilization");
+
+        TextField locationField = new TextField();
+        locationField.setPromptText("Discovery Location");
+
+        // Create a Button to save the artifact (for now it won't do anything)
+        Button saveButton = new Button("Save");
+        saveButton.setOnAction(e -> {
+            // Here you can implement saving logic if you have it set up
+            System.out.println("New Artifact Saved: " + nameField.getText());
+        });
+
+        // Add form fields to the form layout
+        newArtifactForm.getChildren().addAll(
+                new Label("Artifact Name:"), nameField,
+                new Label("Category:"), categoryComboBox,
+                new Label("Discovery Date:"), discoveryDatePicker,
+                new Label("Civilization:"), civilizationField,
+                new Label("Discovery Location:"), locationField,
+                saveButton
+        );
+
+        // Add the new form to the detailsVBox
+        detailsVBox.getChildren().add(newArtifactForm);
     }
+
 
     public void handleEditArtifact() {
 
