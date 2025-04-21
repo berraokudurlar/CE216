@@ -36,50 +36,50 @@ public class MainController {
     public void initialize() {
         this.catalog = new ArtifactCatalog();
         //this is used for testing
-//        Artifact a1 = new Artifact(
-//                "A001", "Golden Vase", Category.SCULPTURE,
-//                "Ancient Egypt", "Giza", "Gold",
-//                LocalDate.of(-1500, 6, 1), "Cairo Museum",
-//                new Dimension(30, 15, 15), 2.5,
-//                new ArrayList<>(java.util.List.of("royalty", "ceremonial")), "/images/golden_vase.jpg"
-//        );
-//
-//        Artifact a2 = new Artifact(
-//                "A002", "Clay Tablet", Category.MANUSCRIPT,
-//                "Sumerians", "Uruk", "Clay",
-//                LocalDate.of(-3200, 1, 15), "British Museum",
-//                new Dimension(10, 8, 1), 0.7,
-//                new ArrayList<>(java.util.List.of("writing", "cuneiform")), "/images/clay_tablet.jpg"
-//        );
-//
-//        Artifact a3 = new Artifact(
-//                "A003", "Bronze Helmet", Category.TOOL,
-//                "Ancient Greece", "Athens", "Bronze",
-//                LocalDate.of(-500, 4, 20), "Athens War Museum",
-//                new Dimension(25, 20, 30), 3.2,
-//                new ArrayList<>(java.util.List.of("military", "helmet")), "/images/bronze_helmet.jpg"
-//        );
-//
-//        Artifact a4 = new Artifact(
-//                "A004", "Terracotta Figurine", Category.SCULPTURE,
-//                "Ancient China", "Xi'an", "Terracotta",
-//                LocalDate.of(-210, 9, 10), "Shaanxi Museum",
-//                new Dimension(50, 20, 20), 7.5,
-//                new ArrayList<>(java.util.List.of("terracotta", "figurine")), "/images/terracotta_figurine.jpg"
-//        );
-//
-//        Artifact a5 = new Artifact(
-//                "A005", "Stone Axe", Category.TOOL,
-//                "Neolithic", "Çatalhöyük", "Stone",
-//                LocalDate.of(-6000, 3, 5), "Anatolian Civilizations Museum",
-//                new Dimension(18, 5, 3), 1.1,
-//                new ArrayList<>(java.util.List.of("tool", "prehistoric")), "/images/stone_axe.jpg"
-//        );
-//        catalog.addArtifact(a1);
-//        catalog.addArtifact(a2);
-//        catalog.addArtifact(a3);
-//        catalog.addArtifact(a4);
-//        catalog.addArtifact(a5);
+        Artifact a1 = new Artifact(
+                "A001", "Golden Vase", Category.SCULPTURE,
+                "Ancient Egypt", "Giza", "Gold",
+                LocalDate.of(-1500, 6, 1), "Cairo Museum",
+                new Dimension(30, 15, 15), 2.5,
+                new ArrayList<>(java.util.List.of("royalty", "ceremonial")), "/images/golden_vase.jpg"
+        );
+
+        Artifact a2 = new Artifact(
+                "A002", "Clay Tablet", Category.MANUSCRIPT,
+                "Sumerians", "Uruk", "Clay",
+                LocalDate.of(-3200, 1, 15), "British Museum",
+                new Dimension(10, 8, 1), 0.7,
+                new ArrayList<>(java.util.List.of("writing", "cuneiform")), "/images/clay_tablet.jpg"
+        );
+
+        Artifact a3 = new Artifact(
+                "A003", "Bronze Helmet", Category.TOOL,
+                "Ancient Greece", "Athens", "Bronze",
+                LocalDate.of(-500, 4, 20), "Athens War Museum",
+                new Dimension(25, 20, 30), 3.2,
+                new ArrayList<>(java.util.List.of("military", "helmet")), "/images/bronze_helmet.jpg"
+        );
+
+        Artifact a4 = new Artifact(
+                "A004", "Terracotta Figurine", Category.SCULPTURE,
+                "Ancient China", "Xi'an", "Terracotta",
+                LocalDate.of(-210, 9, 10), "Shaanxi Museum",
+                new Dimension(50, 20, 20), 7.5,
+                new ArrayList<>(java.util.List.of("terracotta", "figurine")), "/images/terracotta_figurine.jpg"
+        );
+
+        Artifact a5 = new Artifact(
+                "A005", "Stone Axe", Category.TOOL,
+                "Neolithic", "Çatalhöyük", "Stone",
+                LocalDate.of(-6000, 3, 5), "Anatolian Civilizations Museum",
+                new Dimension(18, 5, 3), 1.1,
+                new ArrayList<>(java.util.List.of("tool", "prehistoric")), "/images/stone_axe.jpg"
+        );
+        catalog.addArtifact(a1);
+        catalog.addArtifact(a2);
+        catalog.addArtifact(a3);
+        catalog.addArtifact(a4);
+        catalog.addArtifact(a5);
         this.artifactController = new ArtifactController(catalog);
     }
 

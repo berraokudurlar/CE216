@@ -5,5 +5,12 @@ public enum Category {
     MANUSCRIPT,
     WEAPON,
     TOOL,
-    JEWELRY
+    JEWELRY;
+
+    @Override
+    public String toString() {
+        return name().toUpperCase();
+    }
+
+
 }

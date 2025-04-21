@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import java.net.URL?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="700.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="hacp.histofact.MainController">
+    <stylesheets>
+        <URL value="@../resources/styles/histofact-style.css" />
+    </stylesheets>
+    <top>
+        <VBox>
+            <MenuBar>
+                <Menu mnemonicParsing="false" text="File">
+                    <MenuItem mnemonicParsing="false" onAction="#handleAddArtifact" text="New Artifact" />
+                    <MenuItem mnemonicParsing="false" text="Open" />
+                    <Menu mnemonicParsing="false" text="Open Recent" />
+                    <SeparatorMenuItem mnemonicParsing="false" />
+                    <MenuItem mnemonicParsing="false" onAction="#handleImport" text="Import JSON" />
+                    <MenuItem mnemonicParsing="false" onAction="#handleExport" text="Export JSON" />
+                    <SeparatorMenuItem mnemonicParsing="false" />
+                    <MenuItem mnemonicParsing="false" text="Exit" />
+                </Menu>
+                <Menu mnemonicParsing="false" text="Edit">
+                    <MenuItem mnemonicParsing="false" onAction="#handleEditArtifact" text="Edit Selected Artifact" />
+                    <MenuItem mnemonicParsing="false" onAction="#handleDeleteArtifact" text="Delete Selected Artifact" />
+                </Menu>
+                <Menu mnemonicParsing="false" text="View">
+                    <MenuItem mnemonicParsing="false" text="Refresh" />
+                    <Menu mnemonicParsing="false" text="Sort By">
+                        <MenuItem mnemonicParsing="false" text="Name" />
+                        <MenuItem mnemonicParsing="false" text="Category" />
+                        <MenuItem mnemonicParsing="false" text="Discovery Date" />
+                        <MenuItem mnemonicParsing="false" text="Civilization" />
+                    </Menu>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Help">
+                    <MenuItem mnemonicParsing="false" onAction="#handleUserManual" text="User Manual" />
+                    <MenuItem mnemonicParsing="false" onAction="#handleAbout" text="About" />
+                </Menu>
+            </MenuBar>
+            <ToolBar>
+                <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS">
+                    <Button mnemonicParsing="false" onAction="#handleAddArtifact" text="New">
+                        <tooltip>
+                            <Tooltip text="Add New Artifact" />
+                        </tooltip>
+                    </Button>
+                    <Button mnemonicParsing="false" onAction="#handleEditArtifact" text="Edit">
+                        <tooltip>
+                            <Tooltip text="Edit Selected Artifact" />
+                        </tooltip>
+                    </Button>
+                    <Button mnemonicParsing="false" onAction="#handleDeleteArtifact" text="Delete">
+                        <tooltip>
+                            <Tooltip text="Delete Selected Artifact" />
+                        </tooltip>
+                    </Button>
+                    <HBox alignment="CENTER_RIGHT" spacing="10" HBox.hgrow="ALWAYS">
+                        <TextField fx:id="searchField" prefWidth="250.0" promptText="Search artifacts...">
+                            <tooltip>
+                                <Tooltip text="Search artifacts" />
+                            </tooltip>
+                        </TextField>
+                        <!-- Add the ChoiceBox for selecting search field -->
+                        <ChoiceBox fx:id="searchFieldChoice" prefWidth="150.0">
+                            <tooltip>
+                                <Tooltip text="Select field to search by" />
+                            </tooltip>
+                            <items>
+                                <FXCollections fx:factory="observableArrayList">
+                                    <String fx:value="All Fields" />
+                                    <String fx:value="Artifact ID" />
+                                    <String fx:value="Name" />
+                                    <String fx:value="Category" />
+                                    <String fx:value="Civilization" />
+                                    <String fx:value="Discovery Location" />
+                                    <String fx:value="Composition" />
+                                    <String fx:value="Discovery Date" />
+                                    <String fx:value="Current Place" />
+                                    <String fx:value="Weight" />
+                                </FXCollections>
+                            </items>
+                            <value>
+                                <String fx:value="All Fields" />
+                            </value>
+                        </ChoiceBox>
+                        <Button mnemonicParsing="false" onAction="#handleSearch" text="Search" />
+                    </HBox>
+                </HBox>
+            </ToolBar>
+        </VBox>
+    </top>
+    <center>
+        <SplitPane dividerPositions="0.3">
+            <VBox spacing="10" styleClass="sidebar">
+                <padding>
+                    <Insets bottom="15" left="15" right="15" top="15" />
+                </padding>
+                <Label styleClass="section-label" text="Artifacts" />
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label styleClass="field-label" text="Filter by Tags:" />
+                    <ComboBox fx:id="tagFilterComboBox" promptText="Select Tags" HBox.hgrow="ALWAYS" />
+                    <Button mnemonicParsing="false" onAction="#handleFilterByTags" text="Apply" />
+                </HBox>
+                <ListView fx:id="artifactListView" VBox.vgrow="ALWAYS" />
+            </VBox>
+            <ScrollPane fitToHeight="true" fitToWidth="true" styleClass="details-container">
+                <VBox fx:id="detailsVBox" spacing="15">
+                </VBox>
+            </ScrollPane>
+        </SplitPane>
+    </center>
+    <bottom>
+        <HBox alignment="CENTER_LEFT" styleClass="status-bar">
+            <Label fx:id="statusLabel" text="Ready" />
+        </HBox>
+    </bottom>
+</BorderPane>
