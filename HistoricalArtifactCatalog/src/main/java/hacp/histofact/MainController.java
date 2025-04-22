@@ -4,6 +4,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.geometry.Insets;
 
 import java.awt.*;
 import java.io.File;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Optional;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -21,6 +23,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.scene.control.ButtonType;
 
 
 public class MainController {
@@ -147,10 +150,16 @@ public class MainController {
             VBox card = new VBox(5);
             card.getStyleClass().add("result-card");
 
+        //This part enables the color of selected artifact as red for user clarity.
+            if (selectedArtifact != null && selectedArtifact.getArtifactId().equals(artifact.getArtifactId())) {
+                card.getStyleClass().add("selected-card");
+            }
+
         //This part makes user  to be able to click on the artifact "cards" we use for the display.
             card.setOnMouseClicked(event -> {
                 selectedArtifact = artifact; //Used for delete and edit!
                 statusLabel.setText("Selected: " + artifact.getArtifactName());
+                displayArtifactResults(catalog.getAllArtifacts());
             });
 
             Label title = new Label(artifact.getArtifactName());
@@ -297,7 +306,97 @@ public class MainController {
             return;
         }
 
+        detailsVBox.getChildren().clear();
+
+        // Input fields
+        TextField nameField = new TextField(selectedArtifact.getArtifactName());
+
+        ComboBox<String> categoryComboBox = new ComboBox<>();
+        categoryComboBox.getItems().addAll("Sculpture", "Manuscript", "Tool", "Weapon", "Jewelry", "Pottery");
+        categoryComboBox.setValue(selectedArtifact.getCategory().toString());
+
+        TextField civilizationField = new TextField(selectedArtifact.getCivilization());
+        TextField locationField = new TextField(selectedArtifact.getDiscoveryLocation());
+        TextField currentPlaceField = new TextField(selectedArtifact.getCurrentPlace());
+        TextField compositionField = new TextField(selectedArtifact.getComposition());
+
+        DatePicker discoveryDatePicker = new DatePicker(selectedArtifact.getDiscoveryDate());
+
+        TextField widthField = new TextField(String.valueOf(selectedArtifact.getDimensions().getWidth()));
+        TextField lengthField = new TextField(String.valueOf(selectedArtifact.getDimensions().getLength()));
+        TextField heightField = new TextField(String.valueOf(selectedArtifact.getDimensions().getHeight()));
+        TextField weightField = new TextField(String.valueOf(selectedArtifact.getWeight()));
+
+        TextField tagsField = new TextField(String.join(", ", selectedArtifact.getTags()));
+
+        // Save button
+        Button saveButton = new Button("Save Changes");
+        saveButton.setOnAction(e -> {
+            try {
+                selectedArtifact.setArtifactName(nameField.getText());
+                selectedArtifact.setCategory(Category.valueOf(categoryComboBox.getValue().toUpperCase()));
+                selectedArtifact.setCivilization(civilizationField.getText());
+                selectedArtifact.setDiscoveryLocation(locationField.getText());
+                selectedArtifact.setCurrentPlace(currentPlaceField.getText());
+                selectedArtifact.setComposition(compositionField.getText());
+                selectedArtifact.setDiscoveryDate(discoveryDatePicker.getValue());
+
+                double width = Double.parseDouble(widthField.getText());
+                double length = Double.parseDouble(lengthField.getText());
+                double height = Double.parseDouble(heightField.getText());
+                double weight = Double.parseDouble(weightField.getText());
+                selectedArtifact.setDimensions(new Dimension(width, length, height));
+                selectedArtifact.setWeight(weight);
+
+                String[] tagArray = tagsField.getText().split(",");
+                ArrayList<String> tags = new ArrayList<>();
+                for (String tag : tagArray) {
+                    tag = tag.trim();
+                    if (!tag.isEmpty()) {
+                        tags.add(tag);
+                    }
+                }
+                selectedArtifact.setTags(tags);
+
+                artifactController.updateArtifact(selectedArtifact);
+                statusLabel.setText("Artifact updated successfully.");
+                displayArtifactResults(catalog.getAllArtifacts());
+            } catch (Exception ex) {
+                statusLabel.setText("Error: Invalid input. Please check all fields.");
+                ex.printStackTrace();
+            }
+        });
+
+        // Cancel button
+        Button cancelButton = new Button("Cancel");
+        cancelButton.setOnAction(e -> {
+            statusLabel.setText("Edit cancelled.");
+            displayArtifactResults(catalog.getAllArtifacts());
+        });
+
+        HBox buttonBox = new HBox(10, saveButton, cancelButton);
+
+        VBox form = new VBox(10,
+                new Label("Edit Artifact"),
+                new Label("Name:"), nameField,
+                new Label("Category:"), categoryComboBox,
+                new Label("Civilization:"), civilizationField,
+                new Label("Discovery Location:"), locationField,
+                new Label("Current Place:"), currentPlaceField,
+                new Label("Composition:"), compositionField,
+                new Label("Discovery Date:"), discoveryDatePicker,
+                new Label("Width:"), widthField,
+                new Label("Length:"), lengthField,
+                new Label("Height:"), heightField,
+                new Label("Weight (kg):"), weightField,
+                new Label("Tags (comma separated):"), tagsField,
+                buttonBox
+        );
+
+        form.setPadding(new Insets(10));
+        detailsVBox.getChildren().add(form);
     }
+
 
     @FXML
     public void handleDeleteArtifact() {
@@ -305,11 +404,21 @@ public class MainController {
             statusLabel.setText("No artifact selected for deletion.");
             return;
         }
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Deletion");
+        alert.setHeaderText("Are you sure you want to delete this artifact?");
+        alert.setContentText("Artifact: " + selectedArtifact.getArtifactName());
 
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
         artifactController.deleteArtifact(selectedArtifact.getArtifactId());
         selectedArtifact = null; 
         statusLabel.setText("Artifact deleted.");
         displayArtifactResults(catalog.getAllArtifacts());
+
+        } else {
+            statusLabel.setText("Deletion cancelled.");
+        }
     }
 
 

@@ -261,3 +261,13 @@
     -fx-font-size: 13px;
     -fx-padding: 4px 8px;
 }
+
+.selected-card {
+    -fx-border-color: green;
+    -fx-border-width: 2;
+    -fx-border-radius: 5;
+    -fx-background-color: #50C878;
+    -fx-padding: 10;
+
+}
+
