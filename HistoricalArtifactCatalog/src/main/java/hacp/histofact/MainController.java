@@ -25,6 +25,7 @@ public class MainController {
 
     private ArtifactCatalog catalog;
     private ArtifactController artifactController;
+    private Artifact selectedArtifact;
 
     //fxml items for handleSearch()
     @FXML
@@ -138,6 +139,12 @@ public class MainController {
         for (Artifact artifact : artifacts) {
             VBox card = new VBox(5);
             card.getStyleClass().add("result-card");
+
+        //This part makes user  to be able to click on the artifact "cards" we use for the display.
+            card.setOnMouseClicked(event -> {
+                selectedArtifact = artifact; //Used for delete and edit!
+                statusLabel.setText("Selected: " + artifact.getArtifactName());
+            });
 
             Label title = new Label(artifact.getArtifactName());
             title.getStyleClass().add("result-title");
@@ -278,12 +285,26 @@ public class MainController {
 
 
     public void handleEditArtifact() {
+        if (selectedArtifact == null) {
+            statusLabel.setText("No artifact selected for editing.");
+            return;
+        }
 
     }
 
+    @FXML
     public void handleDeleteArtifact() {
+        if (selectedArtifact == null) {
+            statusLabel.setText("No artifact selected for deletion.");
+            return;
+        }
 
+        artifactController.deleteArtifact(selectedArtifact.getArtifactId());
+        selectedArtifact = null; 
+        statusLabel.setText("Artifact deleted.");
+        displayArtifactResults(catalog.getAllArtifacts());
     }
+
 
     // when search button is clicked
     @FXML

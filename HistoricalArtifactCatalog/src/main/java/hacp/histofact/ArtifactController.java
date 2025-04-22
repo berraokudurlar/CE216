@@ -31,6 +31,7 @@ public class ArtifactController {
     }
 
     public void deleteArtifact(String artifactId) {
+
         if (artifactId == null) {
             return;
         }

@@ -4,6 +4,7 @@ package hacp.histofact;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.List;
 
 public class ArtifactCatalog {
     private ArrayList<Artifact> artifacts;
@@ -27,6 +28,7 @@ public class ArtifactCatalog {
         if (artifactId == null) {
             return false;
         }
+
         Iterator<Artifact> iterator = artifacts.iterator();
         while (iterator.hasNext()) {
             Artifact artifact = iterator.next();
