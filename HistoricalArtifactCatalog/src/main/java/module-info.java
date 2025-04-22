@@ -11,6 +11,10 @@ module hacp.histofact {
     requires com.almasb.fxgl.all;
     requires java.desktop;
 
-    opens hacp.histofact to javafx.fxml;
+    requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.core;
+    requires com.fasterxml.jackson.datatype.jsr310;
+
+    opens hacp.histofact to javafx.fxml, com.fasterxml.jackson.databind;
     exports hacp.histofact;
 }

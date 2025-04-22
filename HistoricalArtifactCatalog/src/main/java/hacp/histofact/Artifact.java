@@ -4,6 +4,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Artifact {
     private String artifactId;
     private String artifactName;
@@ -43,7 +46,9 @@ public class Artifact {
         this.tags = tags != null ? new ArrayList<>(tags) : new ArrayList<>();
         this.imagePath = imagePath;
     }
-
+    public Artifact() {
+        this.tags = new ArrayList<>();
+    }
     // Getters and setters
     public String getArtifactId() {
         return artifactId;

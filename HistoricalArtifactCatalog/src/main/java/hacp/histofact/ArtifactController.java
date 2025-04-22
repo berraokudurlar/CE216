@@ -80,6 +80,23 @@ public class ArtifactController {
         return results;
     }
 
+    public boolean validateArtifact(Artifact artifact) {
+        return artifact.getArtifactId() != null && !artifact.getArtifactId().isEmpty()
+                && artifact.getArtifactName() != null && !artifact.getArtifactName().isEmpty()
+                && artifact.getCategory() != null;
+    }
+    public void addAndSaveArtifact(Artifact artifact) {
+        if (!validateArtifact(artifact)) {
+            System.err.println("Invalid artifact – not saved.");
+            return;
+        }
+
+        JsonManager jsonManager = JsonManager.getInstance();
+        jsonManager.appendArtifactToFile(artifact);
+
+        catalog.addArtifact(artifact);
+
+    }
     public ArrayList<Artifact> filterByTags(ArrayList<String> tags) {
         if (tags == null || tags.isEmpty())
             return null;

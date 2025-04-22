@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 
 import java.awt.*;
+import java.io.File;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -19,13 +20,18 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 
 
 public class MainController {
 
     private ArtifactCatalog catalog;
     private ArtifactController artifactController;
+<<<<<<< Updated upstream
     private Artifact selectedArtifact;
+=======
+    private JsonManager jsonManager = JsonManager.getInstance();
+>>>>>>> Stashed changes
 
     //fxml items for handleSearch()
     @FXML
@@ -367,11 +373,40 @@ public class MainController {
     }
 
     public void handleImport() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Import Artifacts (JSON)");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
+        File file = fileChooser.showOpenDialog(null);
 
+        if (file != null) {
+            try {
+                JsonManager jsonManager = JsonManager.getInstance();
+                jsonManager.setFile(file);
+                ArrayList<Artifact> imported = jsonManager.importArtifacts();
+                for (Artifact a : imported) {
+                    catalog.addArtifact(a);
+                    artifactListView.getItems().add(a);
+                }
+                statusLabel.setText("Imported " + imported.size() + " artifacts.");
+            } catch (Exception e) {
+                statusLabel.setText("Error importing artifacts: " + e.getMessage());
+            }
+        }
     }
 
     public void handleExport() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Export Artifacts (JSON)");
+        fileChooser.setInitialFileName("artifacts.json");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
+        File file = fileChooser.showSaveDialog(null);
 
+        if (file != null) {
+            JsonManager jsonManager = JsonManager.getInstance();
+            jsonManager.setFile(file);
+            jsonManager.exportArtifacts(catalog.getAllArtifacts());
+            statusLabel.setText("Exported " + catalog.getAllArtifacts().size() + " artifacts.");
+        }
     }
 
     public void handleShowHelp() {

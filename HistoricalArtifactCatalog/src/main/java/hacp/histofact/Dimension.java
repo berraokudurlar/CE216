@@ -1,5 +1,8 @@
 package hacp.histofact;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Dimension {
     private double width;
     private double length;
@@ -10,7 +13,7 @@ public class Dimension {
         this.length = length;
         this.height = height;
     }
-
+    public Dimension() {}
     public double getWidth() {
         return width;
     }
