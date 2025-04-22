@@ -27,17 +27,18 @@ public class MainController {
 
     private ArtifactCatalog catalog;
     private ArtifactController artifactController;
-<<<<<<< Updated upstream
+
     private Artifact selectedArtifact;
-=======
+
     private JsonManager jsonManager = JsonManager.getInstance();
->>>>>>> Stashed changes
 
     //fxml items for handleSearch()
     @FXML
     TextField searchField;
     @FXML
     ChoiceBox<String> searchFieldChoice;
+    @FXML
+    ListView<Artifact> artifactListView;
     @FXML
     Label statusLabel;
     @FXML
