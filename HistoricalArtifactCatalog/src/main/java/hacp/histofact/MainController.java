@@ -2,18 +2,24 @@ package hacp.histofact;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 
 import java.awt.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+
 
 public class MainController {
 
@@ -26,12 +32,18 @@ public class MainController {
     @FXML
     ChoiceBox<String> searchFieldChoice;
     @FXML
-    ListView<Artifact> artifactListView;
-    @FXML
     Label statusLabel;
     @FXML
     VBox detailsVBox;
 
+    //fxml items for handleFilterByTags()
+    @FXML
+    GridPane selectedTagsGrid;
+    @FXML
+    ListView<String> tagListView;
+
+    //this stores selected tags on filterByTags part
+    private List<String> selectedTags = new ArrayList<>();
 
     public void initialize() {
         this.catalog = new ArtifactCatalog();
@@ -81,7 +93,140 @@ public class MainController {
         catalog.addArtifact(a4);
         catalog.addArtifact(a5);
         this.artifactController = new ArtifactController(catalog);
+        displayFilterTags();
     }
+
+    // Method to display all tag options on the filter by tags menu
+    public void displayFilterTags() {
+        // getting all unique tags from the catalog
+        Set<String> allTags = new HashSet<>();
+        for (Artifact artifact : catalog.getAllArtifacts()) {
+            allTags.addAll(artifact.getTags());
+        }
+
+        // creating the tag list view
+        if (tagListView != null) {
+            tagListView.getItems().clear();
+            // add all unique tags to the list view
+            tagListView.getItems().addAll(allTags);
+
+            // setting up multiselection
+            tagListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+            // event listener for selection changes
+            tagListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null && !selectedTags.contains(newVal)) {
+                    selectedTags.add(newVal);
+                    updateSelectedTagsDisplay();
+                }
+            });
+        }
+
+        // gridpane for selected tags
+        if (selectedTagsGrid != null) {
+            selectedTagsGrid.setAlignment(Pos.CENTER_LEFT);
+        }
+
+    }
+
+    // used in handleSearch() and handleFilterByTags()
+    // for displaying results in a card view
+    private void displayArtifactResults(List<Artifact> artifacts) {
+        // clear the vbox every time
+        detailsVBox.getChildren().clear();
+
+        for (Artifact artifact : artifacts) {
+            VBox card = new VBox(5);
+            card.getStyleClass().add("result-card");
+
+            Label title = new Label(artifact.getArtifactName());
+            title.getStyleClass().add("result-title");
+
+            Label id = new Label("ID: " + artifact.getArtifactId());
+            id.getStyleClass().add("result-subtitle");
+
+            Label category = new Label("Category: " + artifact.getCategory());
+            Label civ = new Label("Civilization: " + artifact.getCivilization());
+            Label location = new Label("Discovery Location: " + artifact.getDiscoveryLocation());
+            Label date = new Label("Discovery Date: " + artifact.getDiscoveryDate());
+            Label comp = new Label("Composition: " + artifact.getComposition());
+            Label place = new Label("Current Place: " + artifact.getCurrentPlace());
+            Label weight = new Label("Weight: " + artifact.getWeight() + "kg");
+
+            HBox tagBox = new HBox(5);
+            tagBox.getStyleClass().add("tag-container");
+            for (String tag : artifact.getTags()) {
+                Label tagLabel = new Label(tag);
+                tagLabel.getStyleClass().add("tag-bubble");
+                if (selectedTags.contains(tag)) {
+                    tagLabel.getStyleClass().add("matched-tag");
+                }
+                tagBox.getChildren().add(tagLabel);
+            }
+
+            card.getChildren().addAll(title, id, category, civ, location, date, comp, place, weight, tagBox);
+            detailsVBox.getChildren().add(card);
+        }
+    }
+
+    //updating the tags when they are deleted and added
+    private void updateSelectedTagsDisplay() {
+        if (selectedTagsGrid != null) {
+            selectedTagsGrid.getChildren().clear();
+
+            //this part is just to make sure tags are aligned
+            //in a 2x3 (maximum of) way
+            int row = 0;
+            int col = 0;
+            int maxCols = 3;
+            int maxRows = 2;
+
+            for (String tag : selectedTags) {
+                HBox tagBubble = createTagBubble(tag);
+                //checking if num of tags exceeds
+                //if so exits
+                if (row > maxRows) {
+                    System.out.println("Max tags reached.");
+                    return;
+                }
+                //else it adds the tag on the grid
+                selectedTagsGrid.add(tagBubble, col, row);
+                // increases the col num and
+                // if col is 3 gets to the new row
+                col++;
+                if (col >= maxCols) {
+                    col = 0;
+                    row++;
+                }
+            }
+
+            // apply the filter if there are any selected tags
+            if (!selectedTags.isEmpty()) {
+                artifactController.filterByTags(new ArrayList<>(selectedTags));
+            }
+        }
+    }
+
+    //this is for the tags' css
+    private HBox createTagBubble(String tag) {
+        HBox bubble = new HBox(5);
+        bubble.getStyleClass().add("tag-bubble");
+        bubble.setAlignment(Pos.CENTER);
+
+        Label tagLabel = new Label(tag);
+        // and the little x on each tag to deselect
+        Button removeBtn = new Button("×");
+        removeBtn.getStyleClass().add("tag-remove-btn");
+        // action to listen click on x
+        removeBtn.setOnAction(e -> {
+            selectedTags.remove(tag);
+            updateSelectedTagsDisplay();
+        });
+        // add the label and remove button on the tag bubble
+        bubble.getChildren().addAll(tagLabel, removeBtn);
+        return bubble;
+    }
+
 
     // Methods for handling user interactions
     @FXML
@@ -127,6 +272,8 @@ public class MainController {
 
         // Add the new form to the detailsVBox
         detailsVBox.getChildren().add(newArtifactForm);
+
+
     }
 
 
@@ -166,43 +313,35 @@ public class MainController {
             statusLabel.setText("No artifacts found.");
         } else {
             statusLabel.setText("Found " + results.size() + " artifacts.");
-            //list all results separately in vbox card format
-            for (Artifact artifact : results) {
-                VBox card = new VBox(5);
-                card.getStyleClass().add("result-card");
-
-                Label title = new Label(artifact.getArtifactName());
-                title.getStyleClass().add("result-title");
-
-                Label id = new Label("ID: " + artifact.getArtifactId());
-                id.getStyleClass().add("result-subtitle");
-
-                Label category = new Label("Category: " + artifact.getCategory());
-                Label civ = new Label("Civilization: " + artifact.getCivilization());
-                Label location = new Label("Discovery Location: " + artifact.getDiscoveryLocation());
-                Label date = new Label("Discovery Date: " + artifact.getDiscoveryDate());
-                Label comp = new Label("Composition: " + artifact.getComposition());
-                Label place = new Label("Current Place: " + artifact.getCurrentPlace());
-                Label weight = new Label("Weight: " + artifact.getWeight());
-
-                //each tag's css must slay
-                HBox tagBox = new HBox(5);
-                tagBox.getStyleClass().add("tag-container");
-                for (String tag : artifact.getTags()) {
-                    Label tagLabel = new Label(tag);
-                    tagLabel.getStyleClass().add("tag-bubble");
-                    tagBox.getChildren().add(tagLabel);
-                }
-
-                //add all attributes to card and add card to vbox
-                card.getChildren().addAll(title, id, category, civ, location, date, comp, place, weight, tagBox);
-                detailsVBox.getChildren().add(card);
-            }
+            displayArtifactResults(results);
         }
-
     }
 
+    // when apply filer button is clicked
     public void handleFilterByTags() {
+        // checking if any tags are selected
+        if (selectedTags.isEmpty()) {
+            statusLabel.setText("Please select at least one tag to filter.");
+            return;
+        }
+
+        // clear previous results
+        detailsVBox.getChildren().clear();
+
+        // find artifacts that match ALL selected tags
+        List<Artifact> filteredResults = artifactController.filterByTags((ArrayList<String>) selectedTags);
+
+        //if there are no matches show message
+        if (filteredResults.isEmpty()) {
+            statusLabel.setText("No artifacts match all selected tags.");
+            Label noResults = new Label("No artifacts match the selected tags.");
+            noResults.getStyleClass().add("no-results-label");
+            detailsVBox.getChildren().add(noResults);
+        } else {
+            // set the status to success message and display the resulting artifacts
+            statusLabel.setText("Found " + filteredResults.size() + " artifacts matching the selected tags.");
+            displayArtifactResults(filteredResults);
+        }
 
     }
 
@@ -246,7 +385,7 @@ public class MainController {
     }
 
     @FXML
-    public void handleAbout (ActionEvent event) {
+    public void handleAbout(ActionEvent event) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("About");
         alert.setHeaderText(null);

@@ -3,20 +3,20 @@
 /* Root styling variables */
 .root {
     /* Colors based on historical/academic theme */
-    -fx-primary: #5d4037;         /* Dark brown - primary color */
-    -fx-primary-light: #8b6b61;   /* Light brown */
-    -fx-primary-dark: #321911;    /* Very dark brown */
-    -fx-accent: #795548;          /* Medium brown - accent color */
-    -fx-secondary: #bcaaa4;       /* Light tan - secondary color */
+    -fx-primary: #5d4037; /* Dark brown - primary color */
+    -fx-primary-light: #8b6b61; /* Light brown */
+    -fx-primary-dark: #321911; /* Very dark brown */
+    -fx-accent: #795548; /* Medium brown - accent color */
+    -fx-secondary: #bcaaa4; /* Light tan - secondary color */
 
-    -fx-background: #f5f5f5;      /* Off-white background */
-    -fx-card-bg: #ffffff;         /* White for cards/panels */
+    -fx-background: #f5f5f5; /* Off-white background */
+    -fx-card-bg: #ffffff; /* White for cards/panels */
 
-    -fx-text-primary: #212121;    /* Almost black for primary text */
-    -fx-text-secondary: #5d4037;  /* Brown for secondary text */
-    -fx-text-light: #ffffff;      /* White text for dark backgrounds */
+    -fx-text-primary: #212121; /* Almost black for primary text */
+    -fx-text-secondary: #5d4037; /* Brown for secondary text */
+    -fx-text-light: #ffffff; /* White text for dark backgrounds */
 
-    -fx-border-color: #d7ccc8;    /* Light tan for borders */
+    -fx-border-color: #d7ccc8; /* Light tan for borders */
 
     /* Directly applying background color instead of using variables */
     -fx-background-color: #f5f5f5;
@@ -232,4 +232,32 @@
 
 .details-container {
     -fx-alignment: center;
+}
+
+.tag-remove-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #666;
+    -fx-padding: 0 0 0 0;
+    -fx-min-width: 16;
+    -fx-min-height: 16;
+    -fx-max-width: 16;
+    -fx-max-height: 16;
+}
+
+.tag-remove-btn:hover {
+    -fx-text-fill: #ff0000;
+}
+
+.tag-list-view {
+    -fx-background-color: #f5f5f5;
+    -fx-border-color: #ccc;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-padding: 5;
+}
+
+.tag-list-view .list-cell {
+    -fx-alignment: center;
+    -fx-font-size: 13px;
+    -fx-padding: 4px 8px;
 }
