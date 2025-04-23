@@ -5,7 +5,8 @@ public enum Category {
     MANUSCRIPT,
     WEAPON,
     TOOL,
-    JEWELRY;
+    JEWELRY,
+    POTTERY;
 
     @Override
     public String toString() {
