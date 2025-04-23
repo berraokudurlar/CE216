@@ -9,11 +9,8 @@ import javafx.geometry.Insets;
 import java.awt.*;
 import java.io.File;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
-import java.util.Optional;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -23,6 +20,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+
 import javafx.scene.control.ButtonType;
 
 
@@ -30,10 +28,9 @@ public class MainController {
 
     private ArtifactCatalog catalog;
     private ArtifactController artifactController;
+    private JsonManager jsonManager = JsonManager.getInstance();
 
     private Artifact selectedArtifact;
-
-    private JsonManager jsonManager = JsonManager.getInstance();
 
     //fxml items for handleSearch()
     @FXML
@@ -276,11 +273,39 @@ public class MainController {
         TextField locationField = new TextField();
         locationField.setPromptText("Discovery Location");
 
-        // Create a Button to save the artifact (for now it won't do anything)
+        // Create a Button to save the artifact, do not have every field for now
         Button saveButton = new Button("Save");
         saveButton.setOnAction(e -> {
-            // Here you can implement saving logic if you have it set up
-            System.out.println("New Artifact Saved: " + nameField.getText());
+            try {
+                String name = nameField.getText().trim();
+                String categoryStr = categoryComboBox.getValue();
+
+                if (name.isEmpty() || categoryStr == null) {
+                    statusLabel.setText("Name and category are required.");
+                    return;
+                }
+
+                String artifactId = System.currentTimeMillis() + name.substring(0, Math.min(3, name.length())).toLowerCase();
+                Category category = Category.valueOf(categoryStr.toUpperCase(Locale.ROOT));
+
+                Artifact newArtifact = new Artifact(artifactId, name, category);
+                newArtifact.setCivilization(civilizationField.getText().trim());
+                newArtifact.setDiscoveryLocation(locationField.getText().trim());
+                newArtifact.setDiscoveryDate(discoveryDatePicker.getValue());
+
+                //Dealing with json for the new artifact
+                JsonManager jsonManager = JsonManager.getInstance();
+                jsonManager.appendArtifactToFile(newArtifact);
+
+                catalog.addArtifact(newArtifact);
+                displayArtifactResults(catalog.getAllArtifacts());
+                statusLabel.setText("Artifact saved successfully.");
+
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                statusLabel.setText("Error saving artifact: " + ex.getMessage());
+            }
         });
 
         // Add form fields to the form layout
@@ -494,9 +519,12 @@ public class MainController {
                 jsonManager.setFile(file);
                 ArrayList<Artifact> imported = jsonManager.importArtifacts();
                 for (Artifact a : imported) {
+                    if(catalog.getAllArtifacts().contains(a)){
+                        continue;
+                    }
                     catalog.addArtifact(a);
-                    artifactListView.getItems().add(a);
                 }
+                displayArtifactResults(catalog.getAllArtifacts());
                 statusLabel.setText("Imported " + imported.size() + " artifacts.");
             } catch (Exception e) {
                 statusLabel.setText("Error importing artifacts: " + e.getMessage());
