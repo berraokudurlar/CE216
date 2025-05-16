@@ -6,14 +6,15 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.geometry.Insets;
 
-import java.awt.*;
 import java.io.File;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.List;
+import java.util.prefs.Preferences;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
@@ -21,19 +22,20 @@ import javafx.stage.FileChooser;
 import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-
-import javax.xml.namespace.QName;
+import javafx.stage.Stage;
 
 
 public class MainController {
 
     private ArtifactCatalog catalog;
     private ArtifactController artifactController;
-    private JsonManager jsonManager = JsonManager.getInstance();
-
+    private final JsonManager jsonManager = JsonManager.getInstance();
     private Artifact selectedArtifact;
 
-    //fxml items for handleSearch()
+    private static final int MAX_RECENT_ACTIONS = 5;
+    private final Preferences preferences = Preferences.userNodeForPackage(MainController.class);
+    private final List<RecentAction> recentActions = new ArrayList<>();
+
     @FXML
     TextField searchField;
     @FXML
@@ -44,14 +46,13 @@ public class MainController {
     Label statusLabel;
     @FXML
     VBox detailsVBox;
-
-    //fxml items for handleFilterByTags()
     @FXML
     GridPane selectedTagsGrid;
     @FXML
     ListView<String> tagListView;
+    @FXML
+    MenuBar menuBar;
 
-    //this stores selected tags on filterByTags part
     private List<String> selectedTags = new ArrayList<>();
 
     public void initialize() {
@@ -105,6 +106,158 @@ public class MainController {
         displayFilterTags();
     }
 
+    public void handleExit(ActionEvent actionEvent) {
+        statusLabel.setText("Exiting...");
+        System.exit(0);
+    }
+
+    // recent action class for open recent functionality
+    private static class RecentAction {
+        private String type; // "search" or "filter"
+        private String query;
+        private String searchFieldOption;
+        private List<String> tags;
+
+        public RecentAction(String type, String query, String searchFieldOption, List<String> tags) {
+            this.type = type;
+            this.query = query;
+            this.searchFieldOption = searchFieldOption;
+            this.tags = tags != null ? new ArrayList<>(tags) : new ArrayList<>();
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getQuery() {
+            return query;
+        }
+
+        public String getSearchFieldOption() {
+            return searchFieldOption;
+        }
+
+        public List<String> getTags() {
+            return tags;
+        }
+
+        @Override
+        public String toString() {
+            if ("search".equals(type)) {
+                return "Search: '" + query + "' in " + searchFieldOption;
+            } else if ("filter".equals(type)) {
+                return "Filter by tags: " + String.join(", ", tags);
+            }
+            return "Unknown Action";
+        }
+    }
+
+    private Stage getStage() {
+        return (Stage) menuBar.getScene().getWindow();
+    }
+
+    private void saveRecentActions() {
+        for (int i = 0; i < MAX_RECENT_ACTIONS; i++) {
+            if (i < recentActions.size()) {
+                RecentAction action = recentActions.get(i);
+                if (action != null) {
+                    preferences.put("recentAction_" + i + "_type", action.getType());
+                    preferences.put("recentAction_" + i + "_query", action.getQuery());
+                    preferences.put("recentAction_" + i + "_option", action.getSearchFieldOption());
+                    preferences.put("recentAction_" + i + "_tags", String.join(",", action.getTags()));
+                } else {
+                    removeRecentActionPreferences(i);
+                }
+            } else {
+                removeRecentActionPreferences(i);
+            }
+        }
+        try {
+            preferences.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void removeRecentActionPreferences(int index) {
+        preferences.remove("recentAction_" + index + "_type");
+        preferences.remove("recentAction_" + index + "_query");
+        preferences.remove("recentAction_" + index + "_option");
+        preferences.remove("recentAction_" + index + "_tags");
+    }
+
+    private void addToRecentActions(String type, String query, String searchFieldOption, List<String> tags) {
+        RecentAction newAction = new RecentAction(type, query, searchFieldOption, tags);
+        recentActions.removeIf(action ->
+                action.getType().equals(newAction.getType()) &&
+                        Objects.equals(action.getQuery(), newAction.getQuery()) &&
+                        Objects.equals(action.getSearchFieldOption(), newAction.getSearchFieldOption()) &&
+                        action.getTags().equals(newAction.getTags()));
+        recentActions.add(0, newAction);
+        while (recentActions.size() > MAX_RECENT_ACTIONS) {
+            recentActions.remove(recentActions.size() - 1);
+        }
+        updateOpenRecentMenu();
+        saveRecentActions();
+    }
+
+    private void updateOpenRecentMenu() {
+        for (Menu menu : menuBar.getMenus()) {
+            if (menu.getText().equals("File")) {
+                for (MenuItem item : menu.getItems()) {
+                    if (item instanceof Menu && item.getText().equals("Open Recent")) {
+                        updateOpenRecentMenu((Menu) item);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    private void updateOpenRecentMenu(Menu openRecentMenu) {
+        openRecentMenu.getItems().clear();
+        if (recentActions.isEmpty()) {
+            MenuItem emptyItem = new MenuItem("No recent actions");
+            emptyItem.setDisable(true);
+            openRecentMenu.getItems().add(emptyItem);
+        } else {
+            for (RecentAction action : recentActions) {
+                MenuItem recentActionItem = new MenuItem(action.toString());
+                recentActionItem.setOnAction(event -> applyRecentAction(action));
+                openRecentMenu.getItems().add(recentActionItem);
+            }
+        }
+    }
+
+    private void applyRecentAction(RecentAction action) {
+        detailsVBox.getChildren().clear();
+        if ("search".equals(action.getType())) {
+            searchField.setText(action.getQuery());
+            searchFieldChoice.setValue(action.getSearchFieldOption());
+            handleSearch();
+        } else if ("filter".equals(action.getType())) {
+            System.out.println("Applying filter with tags: " + action.getTags()); // Debugging
+
+            // clear previous selections
+            tagListView.getSelectionModel().clearSelection();
+            selectedTags.clear();
+            updateSelectedTagsDisplay();
+
+            // select the tags from the recent action
+            for (String tag : action.getTags()) {
+                int index = tagListView.getItems().indexOf(tag);
+                if (index != -1) {
+                    tagListView.getSelectionModel().select(index);
+                    if (!selectedTags.contains(tag)) {
+                        selectedTags.add(tag);
+                    }
+                }
+            }
+            updateSelectedTagsDisplay();
+            handleFilterByTags();
+        }
+    }
+
     // Method to display all tag options on the filter by tags menu
     public void displayFilterTags() {
         // getting all unique tags from the catalog
@@ -153,7 +306,7 @@ public class MainController {
             card.setOnMouseClicked(event -> {
                 selectedArtifact = artifact;
                 statusLabel.setText("Selected: " + artifact.getArtifactName());
-                displayArtifactResults(catalog.getAllArtifacts());
+                displayArtifactResults(artifacts);
             });
 
             //The part that is connected to css file to make the selected artifact green.
@@ -340,7 +493,6 @@ public class MainController {
                 newArtifact.setImagePath(imagePath);
 
                 //Dealing with json for the new artifact
-                JsonManager jsonManager = JsonManager.getInstance();
                 jsonManager.appendArtifactToFile(newArtifact);
 
                 catalog.addArtifact(newArtifact);
@@ -501,7 +653,7 @@ public class MainController {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
         artifactController.deleteArtifact(selectedArtifact.getArtifactId());
-        selectedArtifact = null; 
+        selectedArtifact = null;
         statusLabel.setText("Artifact deleted.");
         displayArtifactResults(catalog.getAllArtifacts());
 
@@ -540,6 +692,7 @@ public class MainController {
         } else {
             statusLabel.setText("Found " + results.size() + " artifacts.");
             displayArtifactResults(results);
+            addToRecentActions("search", query, selectedField, null); // Save the search
         }
     }
 
@@ -567,6 +720,7 @@ public class MainController {
             // set the status to success message and display the resulting artifacts
             statusLabel.setText("Found " + filteredResults.size() + " artifacts matching the selected tags.");
             displayArtifactResults(filteredResults);
+            addToRecentActions("filter", "", "", new ArrayList<>(selectedTags)); // Save the filter
         }
 
     }
@@ -579,7 +733,6 @@ public class MainController {
 
         if (file != null) {
             try {
-                JsonManager jsonManager = JsonManager.getInstance();
                 jsonManager.setFile(file);
                 ArrayList<Artifact> imported = jsonManager.importArtifacts();
                 for (Artifact a : imported) {
@@ -604,7 +757,6 @@ public class MainController {
         File file = fileChooser.showSaveDialog(null);
 
         if (file != null) {
-            JsonManager jsonManager = JsonManager.getInstance();
             jsonManager.setFile(file);
             jsonManager.exportArtifacts(catalog.getAllArtifacts());
             statusLabel.setText("Exported " + catalog.getAllArtifacts().size() + " artifacts.");
@@ -671,6 +823,10 @@ public class MainController {
         alert.getDialogPane().setContent(textArea);
         alert.getDialogPane().setPrefSize(650, 450);
         alert.showAndWait();
+
+    }
+
+    public void handleEdit(ActionEvent event) {
 
     }
 }

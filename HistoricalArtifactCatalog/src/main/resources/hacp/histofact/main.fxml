@@ -30,16 +30,15 @@
     </stylesheets>
     <top>
         <VBox>
-            <MenuBar>
+            <MenuBar fx:id="menuBar">
                 <Menu mnemonicParsing="false" text="File">
                     <MenuItem mnemonicParsing="false" onAction="#handleAddArtifact" text="New Artifact"/>
-                    <MenuItem mnemonicParsing="false" text="Open"/>
                     <Menu mnemonicParsing="false" text="Open Recent"/>
                     <SeparatorMenuItem mnemonicParsing="false"/>
                     <MenuItem mnemonicParsing="false" onAction="#handleImport" text="Import JSON"/>
                     <MenuItem mnemonicParsing="false" onAction="#handleExport" text="Export JSON"/>
                     <SeparatorMenuItem mnemonicParsing="false"/>
-                    <MenuItem mnemonicParsing="false" text="Exit"/>
+                    <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Exit"/>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Edit">
                     <MenuItem mnemonicParsing="false" onAction="#handleEditArtifact" text="Edit Selected Artifact"/>
