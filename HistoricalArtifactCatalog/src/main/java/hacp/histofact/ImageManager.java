@@ -6,21 +6,34 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
 public class ImageManager {
-    private static final String IMAGE_DIRECTORY = "images";
+    private static final String MAIN_DIRECTORY_NAME = "HistoricalArtifactZBE";
+    private static final String IMAGES_DIRECTORY_NAME = "images";
+    private static final File IMAGE_DIRECTORY;
 
-    // Singleton if needed (optional)
-    private static ImageManager instance = new ImageManager();
+    static {
+        File baseDir = getDocumentsDirectory();
+        File mainDir = new File(baseDir, MAIN_DIRECTORY_NAME);
+        if (!mainDir.exists()) {
+            mainDir.mkdirs();
+        }
+
+        IMAGE_DIRECTORY = new File(mainDir, IMAGES_DIRECTORY_NAME);
+        if (!IMAGE_DIRECTORY.exists()) {
+            IMAGE_DIRECTORY.mkdirs();
+        }
+    }
+
+
+    // Singleton instance
+    private static final ImageManager instance = new ImageManager();
+
     public static ImageManager getInstance() {
         return instance;
     }
 
     private ImageManager() {
-        File dir = new File(IMAGE_DIRECTORY);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
+        // Private constructor for singleton
     }
-
 
     public String saveImage(File sourceImage, String artifactId) {
         if (sourceImage == null || !sourceImage.exists()) {
@@ -28,26 +41,32 @@ public class ImageManager {
         }
 
         String extension = getFileExtension(sourceImage.getName());
-        if (extension == null) extension = "jpg"; // fallback
+        if (extension == null) extension = "jpg"; // fallback default
 
-        String targetFileName = artifactId + "." + extension;
-        File targetFile = new File(IMAGE_DIRECTORY, targetFileName);
+        String baseFileName = artifactId + "." + extension;
+        File targetFile = new File(IMAGE_DIRECTORY, baseFileName);
+
+        int counter = 1;
+        while (targetFile.exists()) {
+            targetFile = new File(IMAGE_DIRECTORY, artifactId + "_" + counter + "." + extension);
+            counter++;
+        }
 
         try {
             Files.copy(sourceImage.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            return "/" + IMAGE_DIRECTORY + "/" + targetFileName;
+            return "/" + MAIN_DIRECTORY_NAME + "/" + IMAGES_DIRECTORY_NAME + "/" + targetFile.getName();
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
     }
 
-   
+
     public File getImage(String imagePath) {
         if (imagePath == null || imagePath.isEmpty()) {
             return null;
         }
-        File file = new File("." + imagePath); // prepend current dir
+        File file = new File(getDocumentsDirectory(), imagePath.startsWith("/") ? imagePath.substring(1) : imagePath);
         return file.exists() ? file : null;
     }
 
@@ -55,5 +74,11 @@ public class ImageManager {
         int dotIndex = filename.lastIndexOf('.');
         return (dotIndex > 0 && dotIndex < filename.length() - 1) ?
                 filename.substring(dotIndex + 1) : null;
+    }
+
+    private static File getDocumentsDirectory() {
+        String userHome = System.getProperty("user.home");
+        File documentsDirectory = new File(userHome, "Documents");
+        return documentsDirectory.exists() ? documentsDirectory : new File(userHome);
     }
 }

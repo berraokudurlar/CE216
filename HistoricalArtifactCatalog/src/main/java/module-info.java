@@ -14,6 +14,7 @@ module hacp.histofact {
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.datatype.jsr310;
+    requires java.prefs;
 
     opens hacp.histofact to javafx.fxml, com.fasterxml.jackson.databind;
     exports hacp.histofact;
