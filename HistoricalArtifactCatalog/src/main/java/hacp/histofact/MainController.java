@@ -797,11 +797,12 @@ public class MainController {
             Optional<ButtonType> result = confirmDialog.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
                 try {
-                    JsonManager jsonManager = JsonManager.getInstance();
                     jsonManager.setFile(file);
                     ArrayList<Artifact> imported = jsonManager.importArtifacts();
-
                     for (Artifact a : imported) {
+                        if (catalog.getAllArtifacts().contains(a)) {
+                            continue;
+                        }
                         catalog.addArtifact(a);
                     }
 
@@ -871,7 +872,6 @@ public class MainController {
 
             Optional<ButtonType> result = dialog.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
-                JsonManager jsonManager = JsonManager.getInstance();
                 jsonManager.setFile(file);
                 jsonManager.exportArtifacts(catalog.getAllArtifacts());
                 statusLabel.setText("Exported " + catalog.getAllArtifacts().size() + " artifacts.");
