@@ -21,6 +21,8 @@ public class ArtifactController {
             return;
         }
         catalog.addArtifact(artifact);
+        JsonManager.getInstance().exportArtifacts(catalog.getAllArtifacts());
+
     }
 
     public void updateArtifact(Artifact artifact) {
@@ -28,6 +30,7 @@ public class ArtifactController {
             return;
         }
         catalog.updateArtifact(artifact);
+        JsonManager.getInstance().exportArtifacts(catalog.getAllArtifacts());
     }
 
     public void deleteArtifact(String artifactId) {
@@ -36,6 +39,7 @@ public class ArtifactController {
             return;
         }
         catalog.removeArtifact(artifactId);
+        JsonManager.getInstance().exportArtifacts(catalog.getAllArtifacts());
     }
 
     public ArrayList<Artifact> searchArtifacts(String query, String field) {
