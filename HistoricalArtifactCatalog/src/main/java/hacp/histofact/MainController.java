@@ -74,6 +74,7 @@ public class MainController {
         list first. If this change is a hindrance, please feel free to delete it. But I felt that we needed to test things
         as soon as possible.
          */
+
         File jsonFile = new File("artifacts.json");
         JsonManager.getInstance().setFile(jsonFile);
 
@@ -366,12 +367,15 @@ public class MainController {
             Label id = new Label("ID: " + artifact.getArtifactId());
             id.getStyleClass().add("result-subtitle");
             Label category = new Label("Category: " + artifact.getCategory());
+            Label date = new Label("Discovery Date: " + artifact.getDiscoveryDate());
             Label civ = new Label("Civilization: " + artifact.getCivilization());
             Label location = new Label("Discovery Location: " + artifact.getDiscoveryLocation());
-            Label date = new Label("Discovery Date: " + artifact.getDiscoveryDate());
-            Label comp = new Label("Composition: " + artifact.getComposition());
             Label place = new Label("Current Place: " + artifact.getCurrentPlace());
-            Label weight = new Label("Weight: " + artifact.getWeight() + "kg");
+            Label comp = new Label("Composition: " + artifact.getComposition());
+            Dimension dim = artifact.getDimensions();
+            Label dimensions = new Label("Dimensions: " +
+                    (dim != null ? dim.getWidth() + " x " + dim.getLength() + " x " + dim.getHeight() : "N/A"));
+            Label weight = new Label("Weight: " + artifact.getWeight() + " kg");
 
             HBox tagBox = new HBox(5);
             tagBox.getStyleClass().add("tag-container");
@@ -384,7 +388,7 @@ public class MainController {
                 tagBox.getChildren().add(tagLabel);
             }
 
-            textInfoBox.getChildren().addAll(title, id, category, civ, location, date, comp, place, weight, tagBox);
+            textInfoBox.getChildren().addAll(title, id, category, date, civ, location, place, comp, dimensions, weight, tagBox);
 
             ImageManager imageManager = ImageManager.getInstance();
             File imageFile = imageManager.getImage(artifact.getImagePath());
@@ -662,6 +666,8 @@ Current Place: %s
                 imageFrame.setMinSize(208, 208);
                 imageFrame.setMaxSize(208, 208);
 
+                //If there is no image, we don't get frames to keep the UI busy.
+
                 if (imageFile != null && imageFile.exists()) {
                     ImageView imageView = new ImageView(new Image(imageFile.toURI().toString()));
                     imageView.setFitWidth(200);
@@ -672,6 +678,7 @@ Current Place: %s
                     // Optional: placeholder if no image found
                     imageFrame.getChildren().add(new Label("No Image"));
                 }
+
 
 // Layout: TextArea on left, spacer and imageFrame on right
                 Region spacer = new Region();
@@ -711,6 +718,7 @@ Current Place: %s
         cancelButton.setOnAction(e -> {
             detailsVBox.getChildren().clear();
             statusLabel.setText("Artifact creation canceled.");
+            //The code returns the main page after the cancel button is clicked.
             displayArtifactResults(catalog.getAllArtifacts());
         });
 
@@ -768,7 +776,6 @@ Current Place: %s
 
     }
 
-
     public void handleEditArtifact() {
         if (selectedArtifact == null) {
             statusLabel.setText("No artifact selected for editing.");
@@ -778,37 +785,46 @@ Current Place: %s
         detailsVBox.getChildren().clear();
 
         // Fields
-        TextField nameField = new TextField(selectedArtifact.getArtifactName());
+        TextField nameField = new TextField(Optional.ofNullable(selectedArtifact.getArtifactName()).orElse(""));
         ComboBox<Category> categoryComboBox = new ComboBox<>(FXCollections.observableArrayList(Category.values()));
-        categoryComboBox.setValue(selectedArtifact.getCategory());
+        categoryComboBox.setValue(Optional.ofNullable(selectedArtifact.getCategory()).orElse(null));
 
-        TextField civilizationField = new TextField(selectedArtifact.getCivilization());
-        TextField locationField = new TextField(selectedArtifact.getDiscoveryLocation());
-        TextField compositionField = new TextField(selectedArtifact.getComposition());
-        DatePicker discoveryDatePicker = new DatePicker(selectedArtifact.getDiscoveryDate());
-        TextField currentPlaceField = new TextField(selectedArtifact.getCurrentPlace());
-        TextField weightField = new TextField(String.valueOf(selectedArtifact.getWeight()));
+        TextField civilizationField = new TextField(Optional.ofNullable(selectedArtifact.getCivilization()).orElse(""));
+        TextField locationField = new TextField(Optional.ofNullable(selectedArtifact.getDiscoveryLocation()).orElse(""));
+        TextField compositionField = new TextField(Optional.ofNullable(selectedArtifact.getComposition()).orElse(""));
+        DatePicker discoveryDatePicker = new DatePicker(Optional.ofNullable(selectedArtifact.getDiscoveryDate()).orElse(null));
+        TextField currentPlaceField = new TextField(Optional.ofNullable(selectedArtifact.getCurrentPlace()).orElse(""));
+        TextField weightField = new TextField(String.valueOf(Optional.ofNullable(selectedArtifact.getWeight()).orElse(0.0)));
 
-        Dimension dim = selectedArtifact.getDimensions();
+        Dimension dim = Optional.ofNullable(selectedArtifact.getDimensions()).orElse(new Dimension(0, 0, 0));
         TextField widthField = new TextField(String.valueOf(dim.getWidth()));
         TextField lengthField = new TextField(String.valueOf(dim.getLength()));
         TextField heightField = new TextField(String.valueOf(dim.getHeight()));
 
-        TextField tagsField = new TextField(String.join(", ", selectedArtifact.getTags()));
-        TextField imagePathField = new TextField(selectedArtifact.getImagePath());
+        TextField tagsField = new TextField(String.join(", ", Optional.ofNullable(selectedArtifact.getTags()).orElse(new ArrayList<>())));
+        TextField imagePathField = new TextField(Optional.ofNullable(selectedArtifact.getImagePath()).orElse(""));
         imagePathField.setEditable(false);
+
         Button chooseImageButton = new Button("Browse");
         chooseImageButton.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Select Artifact Image");
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif"));
-            File selectedFile = fileChooser.showOpenDialog(null);
+            File selectedFile = fileChooser.showOpenDialog(null);  // <-- Changed this line only
             if (selectedFile != null) {
                 String imagePath = ImageManager.getInstance().saveImage(selectedFile, nameField.getText().replaceAll("\\s+", "").toLowerCase());
                 if (imagePath != null) {
                     imagePathField.setText(imagePath);
                 }
             }
+        });
+
+        Button removeImageButton = new Button("Remove Image");
+        removeImageButton.setOnAction(e -> {
+            // Clear the image path
+            imagePathField.setText("No image. Add one!");
+            // Set the text color to white
+            imagePathField.setStyle("-fx-text-fill: white;");
         });
 
         // Save / Cancel buttons
@@ -848,7 +864,8 @@ Current Place: %s
                     if (!tag.isEmpty()) tags.add(tag);
                 }
                 selectedArtifact.setTags(tags);
-                selectedArtifact.setImagePath(imagePathField.getText());
+                String imagePathText = imagePathField.getText().trim();
+                selectedArtifact.setImagePath(imagePathText.isEmpty() ? null : imagePathText);
 
                 artifactController.updateArtifact(selectedArtifact);
                 statusLabel.setText("Artifact updated successfully.");
@@ -902,7 +919,11 @@ Current Place: %s
         formGrid.add(tagsField, 1, row++);
 
         formGrid.add(new Label("Image Path:"), 0, row);
-        formGrid.add(new HBox(5, imagePathField, chooseImageButton), 1, row++);
+        formGrid.add(new HBox(5, imagePathField, chooseImageButton, removeImageButton), 1, row++);
+
+        Region spacer = new Region();
+        spacer.setMinHeight(20);
+        formGrid.add(spacer, 0, row++, 2, 1);
 
         HBox buttonBox = new HBox(10, saveButton, cancelButton);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
@@ -910,7 +931,6 @@ Current Place: %s
         GridPane.setHalignment(buttonBox, HPos.RIGHT);
 
         detailsVBox.getChildren().add(formGrid);
-
     }
 
     @FXML
@@ -1082,7 +1102,7 @@ Current Place: %s
         File file = fileChooser.showOpenDialog(null);
 
         if (file != null) {
-            // Create custom confirmation dialog
+            // Alerts are changed to be dialogs so that we get more freedom in their UI design.
             Dialog<ButtonType> confirmDialog = new Dialog<>();
             confirmDialog.setTitle("Confirm Import");
             confirmDialog.setHeaderText("Are you sure you want to import this file?");
@@ -1096,7 +1116,7 @@ Current Place: %s
 
             confirmDialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
-            // Apply your stylesheet
+            // We use the .css style sheet for dialog design.
             confirmDialog.getDialogPane().getStylesheets().add(
                     getClass().getResource("/hacp/resources/styles/histofact-style.css").toExternalForm()
             );
@@ -1107,11 +1127,30 @@ Current Place: %s
                 try {
                     jsonManager.setFile(file);
                     ArrayList<Artifact> imported = jsonManager.importArtifacts();
+
                     for (Artifact a : imported) {
+                        // If artifact has no ID, assign a new unique one
+                        if (a.getArtifactId() == null || a.getArtifactId().isBlank()) {
+                            String newId;
+                            boolean isDuplicate;
+                            do {
+                                newId = UUID.randomUUID().toString();
+                                isDuplicate = false;
+                                for (Artifact existing : catalog.getAllArtifacts()) {
+                                    if (newId.equals(existing.getArtifactId())) {
+                                        isDuplicate = true;
+                                        break;
+                                    }
+                                }
+                            } while (isDuplicate);
+                            a.setArtifactId(newId);
+                        }
+
                         if (catalog.getAllArtifacts().contains(a)) {
                             continue;
                         }
                         catalog.addArtifact(a);
+                        JsonManager.getInstance().exportArtifacts(catalog.getAllArtifacts());
                     }
 
                     displayArtifactResults(catalog.getAllArtifacts());
@@ -1146,6 +1185,7 @@ Current Place: %s
     }
 
 
+
     public void handleExport() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Export Artifacts (JSON)");
@@ -1153,6 +1193,7 @@ Current Place: %s
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
         File file = fileChooser.showSaveDialog(null);
 
+        //Are you sure you want to use export to this file? alert added.
         if (file != null) {
             Dialog<ButtonType> dialog = new Dialog<>();
             dialog.setTitle("Confirm Export");
@@ -1191,6 +1232,7 @@ Current Place: %s
 
     @FXML
     public void handleUserManual(ActionEvent event) {
+        //User manual now uses HTML file to function. Same with About.
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("User Manual");
         dialog.setHeaderText(null);
