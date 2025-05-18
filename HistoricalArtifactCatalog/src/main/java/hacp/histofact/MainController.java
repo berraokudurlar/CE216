@@ -10,6 +10,7 @@ import javafx.geometry.Insets;
 
 import java.awt.*;
 import java.io.File;
+import java.net.URL;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.List;
@@ -24,6 +25,8 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
@@ -333,18 +336,21 @@ public class MainController {
 
             //This is the part that allows us to select an artifact with our mouse.
             card.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2) {
-                    if (selectedArtifact != null && selectedArtifact.getArtifactId().equals(artifact.getArtifactId())) {
-                        // Deselect if already selected
-                        selectedArtifact = null;
-                        statusLabel.setText("Deselected artifact.");
-                    } else {
-                        // Select this artifact
+                if (event.getClickCount() == 1) {
+                    // Select the artifact on single click
+                    if (selectedArtifact == null || !selectedArtifact.getArtifactId().equals(artifact.getArtifactId())) {
                         selectedArtifact = artifact;
                         statusLabel.setText("Selected: " + artifact.getArtifactName());
+                        displayArtifactResults(artifacts);
                     }
-                    displayArtifactResults(artifacts);
-                    event.consume();
+                } else if (event.getClickCount() == 2) {
+                    // Deselect on double click if this artifact is already selected
+                    if (selectedArtifact != null && selectedArtifact.getArtifactId().equals(artifact.getArtifactId())) {
+                        selectedArtifact = null;
+                        statusLabel.setText("Deselected artifact.");
+                        displayArtifactResults(artifacts);
+                        event.consume(); // prevent default behavior
+                    }
                 }
             });
 
@@ -610,29 +616,29 @@ public class MainController {
                 }
 
                 // A preview dialog for the user to see what they are adding
-                Alert preview = new Alert(Alert.AlertType.CONFIRMATION);
-                preview.setTitle("Confirm Artifact");
-                preview.setHeaderText("Please confirm the artifact details:");
+                Dialog<ButtonType> confirmDialog = new Dialog<>();
+                confirmDialog.setTitle("Confirm Artifact");
+                confirmDialog.setHeaderText("Please confirm the artifact details:");
 
                 String previewText = String.format("""
-    ID: %s
-    Name: %s
-    Category: %s
-    Civilization: %s
-    Location: %s
-    Date: %s
-    Composition: %s
-    Dimensions: %s
-    Weight: %.2f kg
-    Tags: %s
-    Current Place: %s
+ID: %s
+Name: %s
+Category: %s
+Civilization: %s
+Location: %s
+Date: %s
+Composition: %s
+Dimensions: %s
+Weight: %.2f kg
+Tags: %s
+Current Place: %s
 """,
                         newArtifact.getArtifactId(),
                         newArtifact.getArtifactName(),
                         newArtifact.getCategory(),
                         newArtifact.getCivilization(),
                         newArtifact.getDiscoveryLocation(),
-                        newArtifact.getDiscoveryDate(),
+                        newArtifact.getDiscoveryDate() != null ? newArtifact.getDiscoveryDate().toString() : "N/A",
                         newArtifact.getComposition(),
                         newArtifact.getDimensions() != null ? newArtifact.getDimensions().toString() : "N/A",
                         newArtifact.getWeight(),
@@ -640,15 +646,50 @@ public class MainController {
                         newArtifact.getCurrentPlace()
                 );
 
+// TextArea setup
                 TextArea previewArea = new TextArea(previewText);
                 previewArea.setEditable(false);
                 previewArea.setWrapText(true);
                 previewArea.setMaxWidth(Double.MAX_VALUE);
                 previewArea.setMaxHeight(Double.MAX_VALUE);
 
-                preview.getDialogPane().setContent(previewArea);
+// Image setup
+                ImageManager imageManager = ImageManager.getInstance();
+                File imageFile = imageManager.getImage(newArtifact.getImagePath());
 
-                Optional<ButtonType> result = preview.showAndWait();
+                StackPane imageFrame = new StackPane();
+                imageFrame.getStyleClass().add("image-frame");
+                imageFrame.setMinSize(208, 208);
+                imageFrame.setMaxSize(208, 208);
+
+                if (imageFile != null && imageFile.exists()) {
+                    ImageView imageView = new ImageView(new Image(imageFile.toURI().toString()));
+                    imageView.setFitWidth(200);
+                    imageView.setFitHeight(200);
+                    imageView.setPreserveRatio(false);
+                    imageFrame.getChildren().add(imageView);
+                } else {
+                    // Optional: placeholder if no image found
+                    imageFrame.getChildren().add(new Label("No Image"));
+                }
+
+// Layout: TextArea on left, spacer and imageFrame on right
+                Region spacer = new Region();
+                spacer.setMinWidth(20);
+
+                HBox contentBox = new HBox(previewArea, spacer, imageFrame);
+                contentBox.setSpacing(10);
+                contentBox.setMaxWidth(Double.MAX_VALUE);
+                HBox.setHgrow(previewArea, Priority.ALWAYS);
+
+                DialogPane dialogPane = confirmDialog.getDialogPane();
+                dialogPane.setContent(contentBox);
+                dialogPane.getStylesheets().add(getClass().getResource("/hacp/resources/styles/histofact-style.css").toExternalForm());
+                dialogPane.getStyleClass().add("dialog-pane");
+
+                dialogPane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+                Optional<ButtonType> result = confirmDialog.showAndWait();
                 if (result.isEmpty() || result.get() != ButtonType.OK) {
                     statusLabel.setText("Artifact save canceled.");
                     return;
@@ -658,6 +699,7 @@ public class MainController {
                 catalog.addArtifact(newArtifact);
                 displayArtifactResults(catalog.getAllArtifacts());
                 statusLabel.setText("Artifact saved successfully.");
+
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -669,6 +711,7 @@ public class MainController {
         cancelButton.setOnAction(e -> {
             detailsVBox.getChildren().clear();
             statusLabel.setText("Artifact creation canceled.");
+            displayArtifactResults(catalog.getAllArtifacts());
         });
 
         // Changed to a grid layout, looks better
@@ -717,10 +760,11 @@ public class MainController {
         formGrid.add(new HBox(5, imagePathField, chooseImageButton), 1, row++);
 
         HBox buttonBox = new HBox(10, saveButton, cancelButton);
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
         formGrid.add(buttonBox, 1, row);
+        GridPane.setHalignment(buttonBox, HPos.RIGHT);
 
         detailsVBox.getChildren().add(formGrid);
-
 
     }
 
@@ -1147,36 +1191,26 @@ public class MainController {
 
     @FXML
     public void handleUserManual(ActionEvent event) {
-
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("User Manual");
         dialog.setHeaderText(null);
 
-        TextArea manualText = new TextArea(
-                "Welcome to the HistoFact!\n\n"
-                        + "- Use 'New' to add a new artifact.\n"
-                        + "- Use 'Search' to search for the artifacts in any category.\n"
-                        + "- Select an artifact by clicking it with your mouse.\n"
-                        + "- The selected artifact will appear in green.\n"
-                        + "- Use 'Edit' to update a selected artifact.\n"
-                        + "- Use 'Delete' to delete a selected artifact.\n"
-                        + "- On the left screen, there are various tags.\n"
-                        + "- Choose the tags, and then press the 'Apply Filter' button.\n"
-                        + "- Import JSON data by File -> 'Import JSON'.\n"
-                        + "- Export JSON data by File -> 'Export JSON'.\n\n"
-                        + "Make sure to save your work before exiting!"
-        );
-        manualText.setWrapText(true);
-        manualText.setEditable(false);
-        manualText.setPrefWidth(600);
-        manualText.setPrefHeight(400);
-        manualText.getStyleClass().add("text-area");  // for your CSS styling
+        WebView webView = new WebView();
+        WebEngine webEngine = webView.getEngine();
 
-        dialog.getDialogPane().setContent(manualText);
+        // Correct path relative to classpath
+        URL manualUrl = getClass().getResource("/UserManual.html");
+        if (manualUrl != null) {
+            webEngine.load(manualUrl.toExternalForm());
+        } else {
+            webEngine.loadContent("<html><body><h2>User manual not found.</h2></body></html>");
+        }
+
+        webView.setPrefSize(600, 400);
+        dialog.getDialogPane().setContent(webView);
         dialog.getDialogPane().setPrefSize(650, 450);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
 
-        // Correct resource path for CSS
         dialog.getDialogPane().getStylesheets().add(
                 getClass().getResource("/hacp/resources/styles/histofact-style.css").toExternalForm()
         );
@@ -1185,27 +1219,31 @@ public class MainController {
         dialog.showAndWait();
     }
 
+
     @FXML
     public void handleAbout(ActionEvent event) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("About");
         dialog.setHeaderText(null);
 
-        TextArea textArea = new TextArea(
-                "HistoFact is the semester project of three IUE students, Ege Çakıcı, Zeynep Erman and Berra Okudurlar for the CE 216 class.\n\n"
-                        + "It is currently a prototype.\n\n"
-                        + "Our purpose with HistoFact is to make historical artifact management easier.\n\n"
-        );
-        textArea.setWrapText(true);
-        textArea.setEditable(false);
-        textArea.setPrefWidth(600);
-        textArea.setPrefHeight(400);
-        textArea.getStyleClass().add("text-area");
+        WebView webView = new WebView();
+        WebEngine webEngine = webView.getEngine();
 
-        dialog.getDialogPane().setContent(textArea);
+        // Load About.html from resources
+        URL aboutUrl = getClass().getResource("/About.html");
+        if (aboutUrl != null) {
+            webEngine.load(aboutUrl.toExternalForm());
+        } else {
+            webEngine.loadContent("<html><body><h2>About content not found.</h2></body></html>");
+        }
+
+        webView.setPrefSize(600, 400);
+
+        dialog.getDialogPane().setContent(webView);
         dialog.getDialogPane().setPrefSize(650, 450);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
 
+        // Add your custom stylesheet to style the dialog pane itself (buttons, borders, etc.)
         dialog.getDialogPane().getStylesheets().add(
                 getClass().getResource("/hacp/resources/styles/histofact-style.css").toExternalForm()
         );

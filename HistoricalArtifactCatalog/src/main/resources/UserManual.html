@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HistoFact User Manual</title>
+    <style>
+        body {
+            background-color: #f5f0e7;
+            color: #795548;
+            font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .dialog-pane {
+            padding: 25px;
+        }
+
+        .header-panel {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #5d4037;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            color: #5d4037;
+            border-bottom: 2px solid #8b6b61;
+            padding-bottom: 6px;
+        }
+
+        p {
+            margin: 10px 0;
+        }
+
+        ul {
+            margin: 10px 0 10px 20px;
+        }
+
+        .important {
+            background-color: #f9f4f2;
+            border-left: 4px solid #8b6b61;
+            padding: 10px;
+            margin-top: 10px;
+            color: #5d4037;
+        }
+
+        a {
+            color: #795548;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        code {
+            background-color: #f5eae3;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: Consolas, monospace;
+        }
+    </style>
+</head>
+<body>
+<div class="dialog-pane">
+    <div class="header-panel">HistoFact User Manual</div>
+
+    <div class="section">
+        <h2>📚 Overview</h2>
+        <p>HistoFact is a historical artifact management application developed by IUE students. It allows you to create, manage, search, sort, and filter historical artifacts through a user-friendly interface.</p>
+    </div>
+
+    <div class="section">
+        <h2>🔧 Toolbar Structure</h2>
+        <p>The toolbar includes the following sections:</p>
+        <ul>
+            <li><strong>File</strong></li>
+            <li><strong>Edit</strong></li>
+            <li><strong>View</strong></li>
+            <li><strong>Help</strong></li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>📁 File Menu</h2>
+        <ul>
+            <li><strong>New Artifact</strong>: Opens a form to create and add a new artifact.</li>
+            <li><strong>Open Recent</strong>: Loads the last used search or filter configuration.</li>
+            <li><strong>Import JSON</strong>: Loads artifacts from a JSON file.</li>
+            <li><strong>Export JSON</strong>: Saves current artifacts into a JSON file.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>✏️ Edit Menu</h2>
+        <p>This menu includes options for modifying artifacts:</p>
+        <ul>
+            <li><strong>Edit</strong>: Modify the selected artifact.</li>
+            <li><strong>Delete</strong>: Remove the selected artifact.</li>
+        </ul>
+        <div class="important">
+            ⚠ To <strong>select</strong> an artifact, single-click on it.<br>
+            To <strong>deselect</strong> an artifact, double-click it.<br>
+            Selected artifacts are highlighted in <strong>light brown</strong>.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>👁️ View Menu</h2>
+        <ul>
+            <li><strong>Sort By</strong>:
+                <ul>
+                    <li>Name A → Z (Alphabetically)</li>
+                    <li>Name Z → A (Reverse Alphabetically)</li>
+                    <li>Discovery Date ↑ (Chronologically)</li>
+                    <li>Discovery Date ↓ (Reverse Chronologically)</li>
+                    <li>Category</li>
+                    <li>Civilization</li>
+                </ul>
+            </li>
+            <li><strong>Search</strong>: Use the dropdown to choose an attribute (e.g., name, category) and filter artifacts.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>🏺 Artifact Details</h2>
+        <p>Each artifact includes the following attributes:</p>
+        <ul>
+            <li><strong>ID</strong></li>
+            <li><strong>Name</strong></li>
+            <li><strong>Category</strong></li>
+            <li><strong>Civilization</strong></li>
+            <li><strong>Discovery Location</strong></li>
+            <li><strong>Discovery Date</strong></li>
+            <li><strong>Composition</strong></li>
+            <li><strong>Current Place</strong></li>
+            <li><strong>Weight</strong> (in kg)</li>
+        </ul>
+        <div class="important">📌 Required Fields: Artifact ID, Name, and Category</div>
+    </div>
+
+    <div class="section">
+        <h2>💡 Tips</h2>
+        <ul>
+            <li>Use <code>Ctrl + S</code> to quickly save your progress.</li>
+            <li>Select an artifact with a single-click; deselect with a double-click.</li>
+            <li>Use filters on the left panel and click <strong>Apply Filter</strong>.</li>
+            <li>Use the File menu to Import/Export artifacts as JSON files.</li>
+            <li>Make sure to save your work before exiting or importing.</li>
+        </ul>
+    </div>
+
+</div>
+</body>
+</html>

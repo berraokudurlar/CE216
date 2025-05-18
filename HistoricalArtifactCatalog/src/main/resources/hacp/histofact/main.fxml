@@ -45,7 +45,6 @@
                     <MenuItem mnemonicParsing="false" onAction="#handleDeleteArtifact" text="Delete Selected Artifact"/>
                 </Menu>
                 <Menu mnemonicParsing="false" text="View">
-                    <MenuItem mnemonicParsing="false" onAction="#handleRefresh" text="Refresh"/>
                     <Menu mnemonicParsing="false" text="Sort By">
                         <MenuItem mnemonicParsing="false" onAction="#handleSortAZ" text="Name A → Z"/>
                         <MenuItem mnemonicParsing="false" onAction="#handleSortZA" text="Name Z → A"/>
@@ -54,6 +53,7 @@
                         <MenuItem mnemonicParsing="false" onAction="#handleSortByCategory" text="Category"/>
                         <MenuItem mnemonicParsing="false" onAction="#handleSortByCivilization" text="Civilization"/>
                     </Menu>
+                    <MenuItem mnemonicParsing="false" onAction="#handleRefresh" text="Refresh"/>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">
                     <MenuItem mnemonicParsing="false" onAction="#handleUserManual" text="User Manual"/>
@@ -143,7 +143,7 @@
                             <children>
                                 <Button alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false"
                                         onAction="#handleFilterByTags" prefHeight="31.0" prefWidth="91.0"
-                                        text="Apply Filter" textAlignment="CENTER"/>
+                                        text="Apply Filter" textAlignment="CENTER" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
                             </children>
                         </HBox>
                     </children>
