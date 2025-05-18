@@ -66,9 +66,16 @@ public class JsonManager {
         }
     }
 
-    // Append a single artifact to an existing file
+    // Append a single artifact to an existing file, updated for duplicate handling
    public void appendArtifactToFile(Artifact artifact) {
         ArrayList<Artifact> currentArtifacts = importArtifacts();
+       // Prevent duplicates by ID
+       for (Artifact a : currentArtifacts) {
+           if (a.getArtifactId().equals(artifact.getArtifactId())) {
+               System.err.println("Artifact with ID " + artifact.getArtifactId() + " already exists. Skipping append.");
+               return;
+           }
+       }
         currentArtifacts.add(artifact);
         exportArtifacts(currentArtifacts);
     }

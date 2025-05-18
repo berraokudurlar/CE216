@@ -1,7 +1,9 @@
 package hacp.histofact;
 
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.geometry.Insets;
@@ -468,17 +470,20 @@ public class MainController {
 
 
     // Methods for handling user interactions
+
+    //Add button is updated to get every field from user now
+    //Also added a preview dialog for the user to see the new artifact before save
+    //We now also check the dimension input validity
+
+    //Improved the GUI of New and Edit button forms
     @FXML
     public void handleAddArtifact() {
 
         detailsVBox.getChildren().clear();
 
-        VBox newArtifactForm = new VBox(10);
-        new Insets(15, 10, 15, 10);
-
         //I sneaked in the ID here since empty ID would create trouble.
         TextField idField = new TextField();
-        idField.setPromptText("ID Name");
+        idField.setPromptText("Artifact ID");
 
         TextField nameField = new TextField();
         nameField.setPromptText("Artifact Name");
@@ -497,10 +502,32 @@ public class MainController {
         locationField.setPromptText("Discovery Location");
 
         //Now we can upload images on the add screen!!
+        TextField currentPlaceField = new TextField();
+        currentPlaceField.setPromptText("Current Place");
+
+        TextField compositionField = new TextField();
+        compositionField.setPromptText("Composition");
+
+        TextField widthField = new TextField();
+        widthField.setPromptText("Width");
+
+        TextField lengthField = new TextField();
+        lengthField.setPromptText("Length");
+
+        TextField heightField = new TextField();
+        heightField.setPromptText("Height");
+
+        TextField weightField = new TextField();
+        weightField.setPromptText("Weight (kg)");
+
+        TextField tagsField = new TextField();
+        tagsField.setPromptText("Tags (comma separated)");
+
         TextField imagePathField = new TextField();
         imagePathField.setPromptText("/images/example.jpg");
-        Button chooseImageButton = new Button("Choose Image");
+        imagePathField.setEditable(false);
 
+        Button chooseImageButton = new Button("Choose Image");
         chooseImageButton.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Select Artifact Image");
@@ -509,15 +536,33 @@ public class MainController {
             );
             File selectedFile = fileChooser.showOpenDialog(null);
             if (selectedFile != null) {
-                String imagePath = ImageManager.getInstance().saveImage(selectedFile, nameField.getText().replaceAll("\\s+", "").toLowerCase());
+                String imagePath = ImageManager.getInstance().saveImage(
+                        selectedFile, nameField.getText().replaceAll("\\s+", "").toLowerCase()
+                );
                 if (imagePath != null) {
                     imagePathField.setText(imagePath);
                 }
             }
         });
 
+        // Red borders when an info field is left empty
+        nameField.textProperty().addListener((obs, oldVal, newVal) -> {
+            nameField.setStyle(newVal.trim().isEmpty() ? "-fx-border-color: red;" : null);
+        });
 
-        // Create a Button to save the artifact, do not have every field for now
+        categoryComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            categoryComboBox.setStyle(newVal == null ? "-fx-border-color: red;" : null);
+        });
+
+        weightField.textProperty().addListener((obs, oldVal, newVal) -> {
+            try {
+                if (!newVal.trim().isEmpty()) Double.parseDouble(newVal);
+                weightField.setStyle(null);
+            } catch (NumberFormatException e) {
+                weightField.setStyle("-fx-border-color: red;");
+            }
+        });
+
         Button saveButton = new Button("Save");
         saveButton.setOnAction(e -> {
             try {
@@ -525,30 +570,94 @@ public class MainController {
                 String name = nameField.getText().trim();
                 String categoryStr = categoryComboBox.getValue();
 
-                if (artifactId.isEmpty() || name.isEmpty() || categoryStr == null) {
-                    statusLabel.setText("ID, name and category are required.");
+                if (artifactId.isEmpty()) {
+                    artifactId = System.currentTimeMillis() + name.substring(0, Math.min(3, name.length())).toLowerCase();
+                }
+
+                if (name.isEmpty() || categoryStr == null) {
+                    statusLabel.setText("ID, name, and category are required.");
                     return;
                 }
 
-               artifactId = System.currentTimeMillis() + name.substring(0, Math.min(3, name.length())).toLowerCase();
                 Category category = Category.valueOf(categoryStr.toUpperCase(Locale.ROOT));
-
                 Artifact newArtifact = new Artifact(artifactId, name, category);
                 newArtifact.setCivilization(civilizationField.getText().trim());
                 newArtifact.setDiscoveryLocation(locationField.getText().trim());
                 newArtifact.setDiscoveryDate(discoveryDatePicker.getValue());
+                newArtifact.setComposition(compositionField.getText().trim());
+                newArtifact.setCurrentPlace(currentPlaceField.getText().trim());
+                newArtifact.setImagePath(imagePathField.getText().trim());
 
-                String imagePath = imagePathField.getText().trim();
-                newArtifact.setImagePath(imagePath);
+                try {
+                    double w = Double.parseDouble(widthField.getText());
+                    double l = Double.parseDouble(lengthField.getText());
+                    double h = Double.parseDouble(heightField.getText());
+                    newArtifact.setDimensions(new Dimension(w, l, h));
+                } catch (NumberFormatException ignored) {
+                    statusLabel.setText("Invalid dimensions entered. Skipped dimensions.");
+                }
 
-                //Dealing with json for the new artifact
-                JsonManager jsonManager = JsonManager.getInstance() ;
-                jsonManager.appendArtifactToFile(newArtifact);
+                try {
+                    double weight = Double.parseDouble(weightField.getText());
+                    newArtifact.setWeight(weight);
+                } catch (NumberFormatException ignored) {
+                    statusLabel.setText("Invalid weight entered. Skipped weight.");
+                }
 
+                String[] tagArray = tagsField.getText().split(",");
+                for (String tag : tagArray) {
+                    newArtifact.addTag(tag.trim());
+                }
+
+                // A preview dialog for the user to see what they are adding
+                Alert preview = new Alert(Alert.AlertType.CONFIRMATION);
+                preview.setTitle("Confirm Artifact");
+                preview.setHeaderText("Please confirm the artifact details:");
+
+                String previewText = String.format("""
+    ID: %s
+    Name: %s
+    Category: %s
+    Civilization: %s
+    Location: %s
+    Date: %s
+    Composition: %s
+    Dimensions: %s
+    Weight: %.2f kg
+    Tags: %s
+    Current Place: %s
+""",
+                        newArtifact.getArtifactId(),
+                        newArtifact.getArtifactName(),
+                        newArtifact.getCategory(),
+                        newArtifact.getCivilization(),
+                        newArtifact.getDiscoveryLocation(),
+                        newArtifact.getDiscoveryDate(),
+                        newArtifact.getComposition(),
+                        newArtifact.getDimensions() != null ? newArtifact.getDimensions().toString() : "N/A",
+                        newArtifact.getWeight(),
+                        String.join(", ", newArtifact.getTags()),
+                        newArtifact.getCurrentPlace()
+                );
+
+                TextArea previewArea = new TextArea(previewText);
+                previewArea.setEditable(false);
+                previewArea.setWrapText(true);
+                previewArea.setMaxWidth(Double.MAX_VALUE);
+                previewArea.setMaxHeight(Double.MAX_VALUE);
+
+                preview.getDialogPane().setContent(previewArea);
+
+                Optional<ButtonType> result = preview.showAndWait();
+                if (result.isEmpty() || result.get() != ButtonType.OK) {
+                    statusLabel.setText("Artifact save canceled.");
+                    return;
+                }
+
+                JsonManager.getInstance().appendArtifactToFile(newArtifact);
                 catalog.addArtifact(newArtifact);
                 displayArtifactResults(catalog.getAllArtifacts());
                 statusLabel.setText("Artifact saved successfully.");
-
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -556,21 +665,61 @@ public class MainController {
             }
         });
 
-        // Add form fields to the form layout
-        newArtifactForm.getChildren().addAll(
-                new Label("ID Name:"), idField,
-                new Label("Artifact Name:"), nameField,
-                new Label("Category:"), categoryComboBox,
-                new Label("Discovery Date:"), discoveryDatePicker,
-                new Label("Civilization:"), civilizationField,
-                new Label("Discovery Location:"), locationField,
-                new Label("Image Path:"), imagePathField,
-                chooseImageButton,
-                saveButton
-        );
+        Button cancelButton = new Button("Cancel");
+        cancelButton.setOnAction(e -> {
+            detailsVBox.getChildren().clear();
+            statusLabel.setText("Artifact creation canceled.");
+        });
+
+        // Changed to a grid layout, looks better
+        GridPane formGrid = new GridPane();
+        formGrid.setHgap(10);
+        formGrid.setVgap(10);
+        formGrid.setPadding(new Insets(15, 15, 15, 15));
+
+        int row = 0;
+
+        formGrid.add(new Label("Artifact ID:"), 0, row);
+        formGrid.add(idField, 1, row++);
+
+        formGrid.add(new Label("Artifact Name:"), 0, row);
+        formGrid.add(nameField, 1, row++);
+
+        formGrid.add(new Label("Category:"), 0, row);
+        formGrid.add(categoryComboBox, 1, row++);
+
+        formGrid.add(new Label("Discovery Date:"), 0, row);
+        formGrid.add(discoveryDatePicker, 1, row++);
+
+        formGrid.add(new Label("Civilization:"), 0, row);
+        formGrid.add(civilizationField, 1, row++);
+
+        formGrid.add(new Label("Discovery Location:"), 0, row);
+        formGrid.add(locationField, 1, row++);
+
+        formGrid.add(new Label("Current Place:"), 0, row);
+        formGrid.add(currentPlaceField, 1, row++);
+
+        formGrid.add(new Label("Composition:"), 0, row);
+        formGrid.add(compositionField, 1, row++);
+
+        formGrid.add(new Label("Dimensions (W × L × H):"), 0, row);
+        formGrid.add(new HBox(5, widthField, lengthField, heightField), 1, row++);
+
+        formGrid.add(new Label("Weight (kg):"), 0, row);
+        formGrid.add(weightField, 1, row++);
+
+        formGrid.add(new Label("Tags:"), 0, row);
+        formGrid.add(tagsField, 1, row++);
 
         // Add the new form to the detailsVBox
-        detailsVBox.getChildren().add(newArtifactForm);
+        formGrid.add(new Label("Image Path:"), 0, row);
+        formGrid.add(new HBox(5, imagePathField, chooseImageButton), 1, row++);
+
+        HBox buttonBox = new HBox(10, saveButton, cancelButton);
+        formGrid.add(buttonBox, 1, row);
+
+        detailsVBox.getChildren().add(formGrid);
 
 
     }
@@ -584,61 +733,69 @@ public class MainController {
 
         detailsVBox.getChildren().clear();
 
-        //Here, we use Optional. command to make sure the user can actually edit the imported JSON files with null attributes.
-        TextField nameField = new TextField(Optional.ofNullable(selectedArtifact.getArtifactName()).orElse(""));
+        // Fields
+        TextField nameField = new TextField(selectedArtifact.getArtifactName());
+        ComboBox<Category> categoryComboBox = new ComboBox<>(FXCollections.observableArrayList(Category.values()));
+        categoryComboBox.setValue(selectedArtifact.getCategory());
 
-        ComboBox<String> categoryComboBox = new ComboBox<>();
-        categoryComboBox.getItems().addAll("Sculpture", "Manuscript", "Tool", "Weapon", "Jewelry", "Pottery");
-        categoryComboBox.setValue(Optional.ofNullable(selectedArtifact.getCategory()).map(Enum::toString).orElse(null));
+        TextField civilizationField = new TextField(selectedArtifact.getCivilization());
+        TextField locationField = new TextField(selectedArtifact.getDiscoveryLocation());
+        TextField compositionField = new TextField(selectedArtifact.getComposition());
+        DatePicker discoveryDatePicker = new DatePicker(selectedArtifact.getDiscoveryDate());
+        TextField currentPlaceField = new TextField(selectedArtifact.getCurrentPlace());
+        TextField weightField = new TextField(String.valueOf(selectedArtifact.getWeight()));
 
-        TextField civilizationField = new TextField(Optional.ofNullable(selectedArtifact.getCivilization()).orElse(""));
-        TextField locationField = new TextField(Optional.ofNullable(selectedArtifact.getDiscoveryLocation()).orElse(""));
-        TextField currentPlaceField = new TextField(Optional.ofNullable(selectedArtifact.getCurrentPlace()).orElse(""));
-        TextField compositionField = new TextField(Optional.ofNullable(selectedArtifact.getComposition()).orElse(""));
-        DatePicker discoveryDatePicker = new DatePicker(Optional.ofNullable(selectedArtifact.getDiscoveryDate()).orElse(null));
-
-        Dimension dim = Optional.ofNullable(selectedArtifact.getDimensions()).orElse(new Dimension(0, 0, 0));
+        Dimension dim = selectedArtifact.getDimensions();
         TextField widthField = new TextField(String.valueOf(dim.getWidth()));
         TextField lengthField = new TextField(String.valueOf(dim.getLength()));
         TextField heightField = new TextField(String.valueOf(dim.getHeight()));
 
-        TextField weightField = new TextField(String.valueOf(Optional.ofNullable(selectedArtifact.getWeight()).orElse(0.0)));
-        TextField tagsField = new TextField(String.join(", ", Optional.ofNullable(selectedArtifact.getTags()).orElse(new ArrayList<>())));
-
-        TextField imagePathField = new TextField(Optional.ofNullable(selectedArtifact.getImagePath()).orElse(""));
-        //A new button that chooses image files from the desktop. The user can also type out the path name for the file manually.
-        Button chooseImageButton = new Button("Choose Image");
+        TextField tagsField = new TextField(String.join(", ", selectedArtifact.getTags()));
+        TextField imagePathField = new TextField(selectedArtifact.getImagePath());
+        imagePathField.setEditable(false);
+        Button chooseImageButton = new Button("Browse");
         chooseImageButton.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Select Artifact Image");
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif"));
             File selectedFile = fileChooser.showOpenDialog(null);
             if (selectedFile != null) {
-                String newPath = ImageManager.getInstance().saveImage(selectedFile, selectedArtifact.getArtifactId());
-                if (newPath != null) {
-                    imagePathField.setText(newPath);
-                    selectedArtifact.setImagePath(newPath);
+                String imagePath = ImageManager.getInstance().saveImage(selectedFile, nameField.getText().replaceAll("\\s+", "").toLowerCase());
+                if (imagePath != null) {
+                    imagePathField.setText(imagePath);
                 }
             }
         });
 
+        // Save / Cancel buttons
         Button saveButton = new Button("Save Changes");
+        Button cancelButton = new Button("Cancel");
+
         saveButton.setOnAction(e -> {
             try {
-                selectedArtifact.setArtifactName(nameField.getText());
-                selectedArtifact.setCategory(Category.valueOf(categoryComboBox.getValue().toUpperCase()));
-                selectedArtifact.setCivilization(civilizationField.getText());
-                selectedArtifact.setDiscoveryLocation(locationField.getText());
-                selectedArtifact.setCurrentPlace(currentPlaceField.getText());
-                selectedArtifact.setComposition(compositionField.getText());
+                selectedArtifact.setArtifactName(nameField.getText().trim());
+                selectedArtifact.setCategory(categoryComboBox.getValue());
+                selectedArtifact.setCivilization(civilizationField.getText().trim());
+                selectedArtifact.setDiscoveryLocation(locationField.getText().trim());
+                selectedArtifact.setCurrentPlace(currentPlaceField.getText().trim());
+                selectedArtifact.setComposition(compositionField.getText().trim());
                 selectedArtifact.setDiscoveryDate(discoveryDatePicker.getValue());
 
-                double width = Double.parseDouble(widthField.getText());
-                double length = Double.parseDouble(lengthField.getText());
-                double height = Double.parseDouble(heightField.getText());
-                double weight = Double.parseDouble(weightField.getText());
-                selectedArtifact.setDimensions(new Dimension(width, length, height));
-                selectedArtifact.setWeight(weight);
+                try {
+                    double width = Double.parseDouble(widthField.getText());
+                    double length = Double.parseDouble(lengthField.getText());
+                    double height = Double.parseDouble(heightField.getText());
+                    selectedArtifact.setDimensions(new Dimension(width, length, height));
+                } catch (NumberFormatException ignored) {
+                    statusLabel.setText("Invalid dimensions. Skipped dimensions.");
+                }
+
+                try {
+                    double weight = Double.parseDouble(weightField.getText());
+                    selectedArtifact.setWeight(weight);
+                } catch (NumberFormatException ignored) {
+                    statusLabel.setText("Invalid weight. Skipped weight.");
+                }
 
                 String[] tagArray = tagsField.getText().split(",");
                 ArrayList<String> tags = new ArrayList<>();
@@ -647,6 +804,7 @@ public class MainController {
                     if (!tag.isEmpty()) tags.add(tag);
                 }
                 selectedArtifact.setTags(tags);
+                selectedArtifact.setImagePath(imagePathField.getText());
 
                 artifactController.updateArtifact(selectedArtifact);
                 statusLabel.setText("Artifact updated successfully.");
@@ -657,35 +815,58 @@ public class MainController {
             }
         });
 
-        Button cancelButton = new Button("Cancel");
         cancelButton.setOnAction(e -> {
             statusLabel.setText("Edit cancelled.");
             displayArtifactResults(catalog.getAllArtifacts());
         });
 
+        // Layout
+        GridPane formGrid = new GridPane();
+        formGrid.setHgap(10);
+        formGrid.setVgap(10);
+        formGrid.setPadding(new Insets(15));
+
+        int row = 0;
+        formGrid.add(new Label("Artifact Name:"), 0, row);
+        formGrid.add(nameField, 1, row++);
+
+        formGrid.add(new Label("Category:"), 0, row);
+        formGrid.add(categoryComboBox, 1, row++);
+
+        formGrid.add(new Label("Discovery Date:"), 0, row);
+        formGrid.add(discoveryDatePicker, 1, row++);
+
+        formGrid.add(new Label("Civilization:"), 0, row);
+        formGrid.add(civilizationField, 1, row++);
+
+        formGrid.add(new Label("Discovery Location:"), 0, row);
+        formGrid.add(locationField, 1, row++);
+
+        formGrid.add(new Label("Current Place:"), 0, row);
+        formGrid.add(currentPlaceField, 1, row++);
+
+        formGrid.add(new Label("Composition:"), 0, row);
+        formGrid.add(compositionField, 1, row++);
+
+        formGrid.add(new Label("Dimensions (W × L × H):"), 0, row);
+        formGrid.add(new HBox(5, widthField, lengthField, heightField), 1, row++);
+
+        formGrid.add(new Label("Weight (kg):"), 0, row);
+        formGrid.add(weightField, 1, row++);
+
+        formGrid.add(new Label("Tags:"), 0, row);
+        formGrid.add(tagsField, 1, row++);
+
+        formGrid.add(new Label("Image Path:"), 0, row);
+        formGrid.add(new HBox(5, imagePathField, chooseImageButton), 1, row++);
+
         HBox buttonBox = new HBox(10, saveButton, cancelButton);
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+        formGrid.add(buttonBox, 1, row);
+        GridPane.setHalignment(buttonBox, HPos.RIGHT);
 
-        VBox form = new VBox(10,
-                new Label("Edit Artifact"),
-                new Label("Name:"), nameField,
-                new Label("Category:"), categoryComboBox,
-                new Label("Civilization:"), civilizationField,
-                new Label("Discovery Location:"), locationField,
-                new Label("Current Place:"), currentPlaceField,
-                new Label("Composition:"), compositionField,
-                new Label("Discovery Date:"), discoveryDatePicker,
-                new Label("Width:"), widthField,
-                new Label("Length:"), lengthField,
-                new Label("Height:"), heightField,
-                new Label("Weight (kg):"), weightField,
-                new Label("Tags (comma separated):"), tagsField,
-                new Label("Image Path:"), imagePathField,
-                chooseImageButton,
-                buttonBox
-        );
+        detailsVBox.getChildren().add(formGrid);
 
-        form.setPadding(new Insets(10));
-        detailsVBox.getChildren().add(form);
     }
 
     @FXML
@@ -787,6 +968,67 @@ public class MainController {
             addToRecentActions("filter", "", "", new ArrayList<>(selectedTags)); // Save the filter
         }
 
+    }
+
+    //The user can now refresh to default display anytime
+    @FXML
+    public void handleRefresh() {
+        displayArtifactResults(catalog.getAllArtifacts());
+        statusLabel.setText("Artifact list refreshed.");
+        searchField.clear();
+        searchFieldChoice.setValue("All Fields");
+        selectedTags.clear();
+        selectedTagsGrid.getChildren().clear();
+        tagListView.getSelectionModel().clearSelection();
+    }
+
+    //Methods for sorting the artifacts
+    //Can sort alphabetically, by discovery date, category, and civilization
+    @FXML
+    public void handleSortAZ() {
+        List<Artifact> sorted = new ArrayList<>(catalog.getAllArtifacts());
+        sorted.sort(Comparator.comparing(Artifact::getArtifactName, String.CASE_INSENSITIVE_ORDER));
+        displayArtifactResults(sorted);
+        statusLabel.setText("Sorted A → Z");
+    }
+
+    @FXML
+    public void handleSortZA() {
+        List<Artifact> sorted = new ArrayList<>(catalog.getAllArtifacts());
+        sorted.sort(Comparator.comparing(Artifact::getArtifactName, String.CASE_INSENSITIVE_ORDER).reversed());
+        displayArtifactResults(sorted);
+        statusLabel.setText("Sorted Z → A");
+    }
+
+    @FXML
+    public void handleSortByDiscoveryDateAsc() {
+        List<Artifact> sorted = new ArrayList<>(catalog.getAllArtifacts());
+        sorted.sort(Comparator.comparing(Artifact::getDiscoveryDate));
+        displayArtifactResults(sorted);
+        statusLabel.setText("Sorted by earliest discovery date");
+    }
+
+    @FXML
+    public void handleSortByDiscoveryDateDesc() {
+        List<Artifact> sorted = new ArrayList<>(catalog.getAllArtifacts());
+        sorted.sort(Comparator.comparing(Artifact::getDiscoveryDate).reversed());
+        displayArtifactResults(sorted);
+        statusLabel.setText("Sorted by latest discovery date");
+    }
+    @FXML
+    public void handleSortByCategory() {
+        List<Artifact> sorted = new ArrayList<>(catalog.getAllArtifacts());
+        sorted.sort(Comparator.comparing(a -> a.getCategory().toString(), String.CASE_INSENSITIVE_ORDER));
+        displayArtifactResults(sorted);
+        statusLabel.setText("Sorted by category.");
+    }
+
+    @FXML
+    public void handleSortByCivilization() {
+        List<Artifact> sorted = new ArrayList<>(catalog.getAllArtifacts());
+        sorted.sort(Comparator.comparing(Artifact::getCivilization, String.CASE_INSENSITIVE_ORDER));
+        displayArtifactResults(sorted);
+        statusLabel.setText("Sorted by civilization.");
     }
 
     public void handleImport() {

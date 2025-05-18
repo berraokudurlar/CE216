@@ -45,18 +45,21 @@
                     <MenuItem mnemonicParsing="false" onAction="#handleDeleteArtifact" text="Delete Selected Artifact"/>
                 </Menu>
                 <Menu mnemonicParsing="false" text="View">
-                    <MenuItem mnemonicParsing="false" text="Refresh"/>
+                    <MenuItem mnemonicParsing="false" onAction="#handleRefresh" text="Refresh"/>
                     <Menu mnemonicParsing="false" text="Sort By">
-                        <MenuItem mnemonicParsing="false" text="Name"/>
-                        <MenuItem mnemonicParsing="false" text="Category"/>
-                        <MenuItem mnemonicParsing="false" text="Discovery Date"/>
-                        <MenuItem mnemonicParsing="false" text="Civilization"/>
+                        <MenuItem mnemonicParsing="false" onAction="#handleSortAZ" text="Name A → Z"/>
+                        <MenuItem mnemonicParsing="false" onAction="#handleSortZA" text="Name Z → A"/>
+                        <MenuItem mnemonicParsing="false" onAction="#handleSortByDiscoveryDateAsc" text="Discovery Date ↑"/>
+                        <MenuItem mnemonicParsing="false" onAction="#handleSortByDiscoveryDateDesc" text="Discovery Date ↓"/>
+                        <MenuItem mnemonicParsing="false" onAction="#handleSortByCategory" text="Category"/>
+                        <MenuItem mnemonicParsing="false" onAction="#handleSortByCivilization" text="Civilization"/>
                     </Menu>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">
                     <MenuItem mnemonicParsing="false" onAction="#handleUserManual" text="User Manual"/>
                     <MenuItem mnemonicParsing="false" onAction="#handleAbout" text="About"/>
                 </Menu>
+
             </MenuBar>
             <ToolBar>
                 <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS">
